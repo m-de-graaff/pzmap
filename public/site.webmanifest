@@ -1,0 +1,13 @@
+{
+  "name": "Knox Country Map — Project Zomboid B42",
+  "short_name": "Knox Country",
+  "description": "Interactive isometric map of Project Zomboid Build 42 Knox Country.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}
