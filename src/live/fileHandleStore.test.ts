@@ -1,6 +1,6 @@
 import { IDBFactory } from 'fake-indexeddb';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { saveFileHandle, loadFileHandle, ensureReadPermission } from './fileHandleStore';
+import { saveFileHandle, loadFileHandle, hasReadPermission, ensureReadPermission } from './fileHandleStore';
 
 function fakeHandle(name: string) {
   return { name } as unknown as FileSystemFileHandle;
@@ -29,6 +29,28 @@ describe('saveFileHandle / loadFileHandle', () => {
     await saveFileHandle(fakeHandle('second.json'));
     const loaded = await loadFileHandle();
     expect((loaded as unknown as { name: string }).name).toBe('second.json');
+  });
+});
+
+describe('hasReadPermission', () => {
+  beforeEach(() => vi.restoreAllMocks());
+
+  it('returns true when permission is granted, without ever prompting', async () => {
+    const queryPermission = vi.fn().mockResolvedValue('granted');
+    const requestPermission = vi.fn();
+    const handle = { queryPermission, requestPermission } as unknown as FileSystemFileHandle;
+
+    expect(await hasReadPermission(handle)).toBe(true);
+    expect(requestPermission).not.toHaveBeenCalled();
+  });
+
+  it('returns false when permission is not granted, without prompting', async () => {
+    const queryPermission = vi.fn().mockResolvedValue('prompt');
+    const requestPermission = vi.fn();
+    const handle = { queryPermission, requestPermission } as unknown as FileSystemFileHandle;
+
+    expect(await hasReadPermission(handle)).toBe(false);
+    expect(requestPermission).not.toHaveBeenCalled();
   });
 });
 

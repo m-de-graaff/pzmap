@@ -36,8 +36,17 @@ export async function loadFileHandle(): Promise<FileSystemFileHandle | null> {
   return handle;
 }
 
+// Safe to call anytime — never prompts. Use for a silent, automatic resume
+// (e.g. on page load): browsers don't reliably grant requestPermission()
+// outside a user gesture, so checking without asking is the only thing that
+// can run there without risking a silently-broken permission request.
+export async function hasReadPermission(handle: FileSystemFileHandle): Promise<boolean> {
+  return (await handle.queryPermission({ mode: 'read' })) === 'granted';
+}
+
+// May show the browser's permission prompt — only call from inside a click
+// handler or other user gesture.
 export async function ensureReadPermission(handle: FileSystemFileHandle): Promise<boolean> {
-  const opts = { mode: 'read' as const };
-  if ((await handle.queryPermission(opts)) === 'granted') return true;
-  return (await handle.requestPermission(opts)) === 'granted';
+  if (await hasReadPermission(handle)) return true;
+  return (await handle.requestPermission({ mode: 'read' })) === 'granted';
 }

@@ -13,7 +13,7 @@ import type { LivePlayer, LivePayload } from './live/protocol';
 import { connectToRoom, generateRoomCode } from './live/relayClient';
 import type { RoomStatus, RoomPublisher } from './live/relayClient';
 import { getRoomCodeFromHash, setRoomCodeInHash } from './live/roomHash';
-import { saveFileHandle, loadFileHandle, ensureReadPermission } from './live/fileHandleStore';
+import { saveFileHandle, loadFileHandle, hasReadPermission, ensureReadPermission } from './live/fileHandleStore';
 import './App.css';
 
 export default function App() {
@@ -34,6 +34,7 @@ export default function App() {
   const [roomStatus, setRoomStatus] = useState<RoomStatus | null>(null);
   const [roomPublishers, setRoomPublishers] = useState<RoomPublisher[]>([]);
   const [myConnId, setMyConnId] = useState<string | null>(null);
+  const [savedHandle, setSavedHandle] = useState<FileSystemFileHandle | null>(null);
   const roomConnRef = useRef<{ publish: (p: LivePayload) => void; close: () => void } | null>(null);
 
   const joinRoom = (code: string) => {
@@ -73,10 +74,24 @@ export default function App() {
     try {
       const handle = await pickLiveFile();
       if (!handle) return;
+      setSavedHandle(null);
       startSharing(handle);
     } catch {
       setLiveStatus('error');
       setLiveError('This browser cannot share a live location file (try Chrome or Edge).');
+    }
+  };
+
+  // A saved handle whose permission the browser has since dropped: this is
+  // gesture-triggered (a click), so requestPermission() is allowed to prompt.
+  const handleResumeSharing = async () => {
+    if (!savedHandle) return;
+    if (await ensureReadPermission(savedHandle)) {
+      setSavedHandle(null);
+      startSharing(savedHandle);
+    } else {
+      setLiveStatus('error');
+      setLiveError('Permission was not granted. Click "Share my location" to pick the file again.');
     }
   };
 
@@ -98,22 +113,35 @@ export default function App() {
   useEffect(() => () => liveStopRef.current?.(), []);
 
   // Opening a room link works whether or not you ever share your own
-  // location — you still see everyone already in it.
+  // location — you still see everyone already in it. Cleanup must null the
+  // ref (not just close()), or StrictMode's dev-mode mount/cleanup/remount
+  // cycle leaves joinRoom's "already connected" guard pointing at a closed
+  // connection and the remount never reconnects.
   useEffect(() => {
     const code = getRoomCodeFromHash();
     if (code) joinRoom(code);
-    return () => roomConnRef.current?.close();
+    return () => {
+      roomConnRef.current?.close();
+      roomConnRef.current = null;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Resume a previously-picked file with no user interaction, so sharing is
   // a true one-time setup rather than something you re-grant every visit.
+  // Only ever queries — never requestPermission() outside a click, since
+  // browsers don't reliably grant it without one. If the browser dropped the
+  // permission, surface a "Resume sharing" button instead of resuming silent
+  // and failing silent.
   useEffect(() => {
     (async () => {
       const handle = await loadFileHandle();
       if (!handle) return;
-      if (!(await ensureReadPermission(handle))) return;
-      startSharing(handle);
+      if (await hasReadPermission(handle)) {
+        startSharing(handle);
+      } else {
+        setSavedHandle(handle);
+      }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -176,6 +204,8 @@ export default function App() {
         followEnabled={followEnabled}
         onPickLiveFile={handlePickLiveFile}
         onToggleFollow={() => setFollowEnabled((v) => !v)}
+        hasSavedHandle={Boolean(savedHandle)}
+        onResumeSharing={handleResumeSharing}
         relayEnabled={Boolean(relayUrl)}
         roomCode={roomCode}
         roomStatus={roomStatus}

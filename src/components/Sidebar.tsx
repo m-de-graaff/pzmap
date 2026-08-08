@@ -28,6 +28,8 @@ interface SidebarProps {
   roomStatus: RoomStatus | null;
   roomMembers: RoomPublisher[];
   onStopSharing: () => void;
+  hasSavedHandle: boolean;
+  onResumeSharing: () => void;
 }
 
 export default function Sidebar({
@@ -36,6 +38,7 @@ export default function Sidebar({
   results, selected, onSelect, onClearSelection, searchRef,
   liveStatus, liveError, livePlayers, followEnabled, onPickLiveFile, onToggleFollow,
   relayEnabled, roomCode, roomStatus, roomMembers, onStopSharing,
+  hasSavedHandle, onResumeSharing,
 }: SidebarProps) {
   const listRef = useRef<HTMLUListElement>(null);
   const [copied, setCopied] = useState(false);
@@ -120,8 +123,8 @@ export default function Sidebar({
           )}
         </div>
         {livePlayers.length === 0 ? (
-          <button type="button" className="btn" onClick={onPickLiveFile}>
-            {liveStatus === 'idle' ? 'Share my location' : 'Choose file again'}
+          <button type="button" className="btn" onClick={hasSavedHandle ? onResumeSharing : onPickLiveFile}>
+            {hasSavedHandle ? 'Resume sharing' : liveStatus === 'idle' ? 'Share my location' : 'Choose file again'}
           </button>
         ) : (
           <div className="live-controls">
@@ -137,13 +140,12 @@ export default function Sidebar({
                 <span className="switch-knob" />
               </span>
             </button>
-            <button type="button" className="btn btn-quiet" onClick={onStopSharing}>Stop sharing</button>
           </div>
         )}
         {liveStatus === 'error' && liveError && (
           <p className="live-error" role="alert">{liveError}</p>
         )}
-        {livePlayers.length === 0 && liveStatus === 'idle' && (
+        {livePlayers.length === 0 && liveStatus === 'idle' && !hasSavedHandle && (
           <p className="live-hint">
             Requires the <strong>pzmap Live</strong> Workshop mod. Pick your
             <code>Zomboid/Lua/pzmap-live.json</code> file once — it's remembered after that, no
@@ -155,9 +157,14 @@ export default function Sidebar({
             <span className="room-status">
               {roomStatus === 'connected' ? `${roomMembers.length} watching` : 'Connecting…'}
             </span>
-            <button type="button" className="btn" aria-live="polite" onClick={copyLink}>
-              {linkCopied ? 'Copied!' : 'Copy link'}
-            </button>
+            <div className="room-actions">
+              <button type="button" className="btn" aria-live="polite" onClick={copyLink}>
+                {linkCopied ? 'Copied!' : 'Copy link'}
+              </button>
+              <button type="button" className="btn btn-quiet" onClick={onStopSharing}>
+                {livePlayers.length > 0 ? 'Stop sharing' : 'Leave'}
+              </button>
+            </div>
           </div>
         )}
       </div>
