@@ -9,6 +9,14 @@ An interactive map of Knox Country for Project Zomboid Build 42, built with Vite
 - **Town & POI search with category filters** — towns from PZwiki B42 coordinates, plus a curated (approximate) POI set: medical, police, fire, guns, shops, gas, military, landmarks, industrial.
 - **Street name on hover**, cursor coordinate readout in game tiles, shareable URL hash (`#x=…&y=…&z=…`), "Copy coords", and a deep link to the PZ Map Project at the same spot.
 
+### Live location (experimental)
+
+Install the **pzmap Live** Workshop mod (`mod/pzmapLive` in this repo) and it writes your
+character's position to `Zomboid/Lua/pzmap-live.json` while you play. Click "Share my
+location" in the sidebar, pick that file once, and your position updates live on the map with
+a "Follow me" toggle. Everything happens in your browser — no server, no account. (Friends'
+locations and whole-server views are a planned follow-up; see `docs/plans/`.)
+
 ## Getting started
 
 ```sh

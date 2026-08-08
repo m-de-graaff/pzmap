@@ -7,6 +7,9 @@ import { searchLocations } from './lib/search';
 import { buildStreetLocations } from './lib/streets';
 import { loadMapData, ALL_LAYERS } from './map/vectorLayer';
 import type { LayerKey } from './map/vectorLayer';
+import { pickLiveFile, startPolling } from './live/fileSource';
+import type { LiveSourceStatus } from './live/fileSource';
+import type { LivePlayer } from './live/protocol';
 import './App.css';
 
 export default function App() {
@@ -15,6 +18,28 @@ export default function App() {
   const [selected, setSelected] = useState<Location | null>(null);
   const [streetLocs, setStreetLocs] = useState<Location[]>([]);
   const searchRef = useRef<HTMLInputElement>(null);
+
+  const [liveStatus, setLiveStatus] = useState<LiveSourceStatus>('idle');
+  const [liveError, setLiveError] = useState<string | null>(null);
+  const [livePlayers, setLivePlayers] = useState<LivePlayer[]>([]);
+  const [followEnabled, setFollowEnabled] = useState(true);
+  const liveStopRef = useRef<(() => void) | null>(null);
+
+  const handlePickLiveFile = async () => {
+    const handle = await pickLiveFile();
+    if (!handle) return;
+    liveStopRef.current?.();
+    setLiveError(null);
+    liveStopRef.current = startPolling(handle, 1000, {
+      onPayload: (payload) => setLivePlayers(payload.players),
+      onStatus: (status, message) => {
+        setLiveStatus(status);
+        setLiveError(message ?? null);
+      },
+    });
+  };
+
+  useEffect(() => () => liveStopRef.current?.(), []);
 
   useEffect(() => {
     let alive = true;
@@ -61,9 +86,21 @@ export default function App() {
         onSelect={setSelected}
         onClearSelection={() => setSelected(null)}
         searchRef={searchRef}
+        liveStatus={liveStatus}
+        liveError={liveError}
+        livePlayers={livePlayers}
+        followEnabled={followEnabled}
+        onPickLiveFile={handlePickLiveFile}
+        onToggleFollow={() => setFollowEnabled((v) => !v)}
       />
       <main className="map-main" aria-label="Knox Country map">
-        <MapView layerVis={layerVis} selected={selected} onSelect={setSelected} />
+        <MapView
+          layerVis={layerVis}
+          selected={selected}
+          onSelect={setSelected}
+          livePlayers={livePlayers}
+          followLiveId={followEnabled ? (livePlayers[0]?.id ?? null) : null}
+        />
       </main>
     </div>
   );
