@@ -14,12 +14,15 @@ interface SidebarProps {
   onSelect: (loc: Location) => void;
   onClearSelection: () => void;
   searchRef: React.RefObject<HTMLInputElement | null>;
+  open: boolean;
+  onClose: () => void;
 }
 
 export default function Sidebar({
   query, onQueryChange,
   layerVis, onToggleLayer,
   results, selected, onSelect, onClearSelection, searchRef,
+  open, onClose,
 }: SidebarProps) {
   const listRef = useRef<HTMLUListElement>(null);
   const [copied, setCopied] = useState(false);
@@ -47,10 +50,20 @@ export default function Sidebar({
   const streetNamesOn = layerVis.has('streetNames');
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar${open ? '' : ' is-collapsed'}`}>
       <header className="sidebar-header">
-        <h1>Knox Country</h1>
-        <p className="subtitle">Project Zomboid · Build 42 map</p>
+        <div>
+          <h1>Knox Country</h1>
+          <p className="subtitle">Project Zomboid · Build 42 map</p>
+        </div>
+        <button
+          type="button"
+          className="icon-btn sidebar-close-btn"
+          aria-label="Hide sidebar"
+          onClick={onClose}
+        >
+          ✕
+        </button>
       </header>
 
       <div className="search-row">
