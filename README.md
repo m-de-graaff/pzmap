@@ -14,8 +14,18 @@ An interactive map of Knox Country for Project Zomboid Build 42, built with Vite
 Install the **pzmap Live** Workshop mod (`mod/pzmapLive` in this repo) and it writes your
 character's position to `Zomboid/Lua/pzmap-live.json` while you play. Click "Share my
 location" in the sidebar, pick that file once, and your position updates live on the map with
-a "Follow me" toggle. Everything happens in your browser — no server, no account. (Friends'
-locations and whole-server views are a planned follow-up; see `docs/plans/`.)
+a "Follow me" toggle. Everything happens in your browser — no server, no account.
+
+**Friends**: once you're sharing your own location, click "Start a room" — the URL gains a
+`room=` code. Send that link to a friend and they'll see your marker live without installing
+anything. This talks to a small Cloudflare relay (`relay/`); see that folder's README for how
+to run one yourself (`npx wrangler dev` locally, or `wrangler deploy` to Cloudflare, which
+needs your own Cloudflare account — that step isn't done for you).
+
+**Whole server**: a server admin can enable the mod's server half (writes every online
+player to the server's `Zomboid/Lua/pzmap-live-server.json`) and run the companion
+`pzmap-bridge` tool (`bridge/`) to publish the whole roster into a relay room. See `bridge/`'s
+README for the exact command.
 
 ## Getting started
 
