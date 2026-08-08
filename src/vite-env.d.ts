@@ -1,7 +1,11 @@
 /// <reference types="vite/client" />
 
+type FileSystemPermissionMode = 'read' | 'readwrite';
+
 interface FileSystemFileHandle {
   getFile(): Promise<File>;
+  queryPermission(opts?: { mode?: FileSystemPermissionMode }): Promise<PermissionState>;
+  requestPermission(opts?: { mode?: FileSystemPermissionMode }): Promise<PermissionState>;
 }
 
 interface OpenFilePickerOptions {

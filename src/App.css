@@ -156,6 +156,12 @@
   border-radius: 4px;
 }
 
+.live-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .room-row {
   display: flex;
   align-items: center;
@@ -319,6 +325,17 @@
 
 .btn:active {
   transform: scale(0.98);
+}
+
+.btn-quiet {
+  background: transparent;
+  color: var(--text-dim);
+  border-color: var(--border);
+}
+
+.btn-quiet:hover {
+  background: var(--panel-2);
+  color: var(--text);
 }
 
 /* ---------- results ---------- */

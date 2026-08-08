@@ -27,8 +27,7 @@ interface SidebarProps {
   roomCode: string | null;
   roomStatus: RoomStatus | null;
   roomMembers: RoomPublisher[];
-  onStartRoom: () => void;
-  onLeaveRoom: () => void;
+  onStopSharing: () => void;
 }
 
 export default function Sidebar({
@@ -36,10 +35,21 @@ export default function Sidebar({
   layerVis, onToggleLayer,
   results, selected, onSelect, onClearSelection, searchRef,
   liveStatus, liveError, livePlayers, followEnabled, onPickLiveFile, onToggleFollow,
-  relayEnabled, roomCode, roomStatus, roomMembers, onStartRoom, onLeaveRoom,
+  relayEnabled, roomCode, roomStatus, roomMembers, onStopSharing,
 }: SidebarProps) {
   const listRef = useRef<HTMLUListElement>(null);
   const [copied, setCopied] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setLinkCopied(true);
+      window.setTimeout(() => setLinkCopied(false), 1500);
+    } catch {
+      /* clipboard unavailable — the link is in the address bar anyway */
+    }
+  };
 
   const moveFocus = (delta: number) => {
     const items = listRef.current?.querySelectorAll<HTMLButtonElement>('button.result');
@@ -114,18 +124,21 @@ export default function Sidebar({
             {liveStatus === 'idle' ? 'Share my location' : 'Choose file again'}
           </button>
         ) : (
-          <button
-            type="button"
-            role="switch"
-            aria-checked={followEnabled}
-            className="switch-row"
-            onClick={onToggleFollow}
-          >
-            <span className="switch-label">Follow me</span>
-            <span className="switch-track" aria-hidden="true">
-              <span className="switch-knob" />
-            </span>
-          </button>
+          <div className="live-controls">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={followEnabled}
+              className="switch-row"
+              onClick={onToggleFollow}
+            >
+              <span className="switch-label">Follow me</span>
+              <span className="switch-track" aria-hidden="true">
+                <span className="switch-knob" />
+              </span>
+            </button>
+            <button type="button" className="btn btn-quiet" onClick={onStopSharing}>Stop sharing</button>
+          </div>
         )}
         {liveStatus === 'error' && liveError && (
           <p className="live-error" role="alert">{liveError}</p>
@@ -133,22 +146,18 @@ export default function Sidebar({
         {livePlayers.length === 0 && liveStatus === 'idle' && (
           <p className="live-hint">
             Requires the <strong>pzmap Live</strong> Workshop mod. Pick your
-            <code>Zomboid/Lua/pzmap-live.json</code> file once — it stays selected for this browser
-            tab.
+            <code>Zomboid/Lua/pzmap-live.json</code> file once — it's remembered after that, no
+            re-picking.
           </p>
         )}
-        {relayEnabled && (
+        {relayEnabled && roomCode && (
           <div className="room-row">
-            {roomCode ? (
-              <>
-                <span className="room-status">
-                  {roomStatus === 'connected' ? `Room ${roomCode} · ${roomMembers.length} here` : 'Connecting…'}
-                </span>
-                <button type="button" className="btn" onClick={onLeaveRoom}>Leave room</button>
-              </>
-            ) : (
-              <button type="button" className="btn" onClick={onStartRoom}>Start a room</button>
-            )}
+            <span className="room-status">
+              {roomStatus === 'connected' ? `${roomMembers.length} watching` : 'Connecting…'}
+            </span>
+            <button type="button" className="btn" aria-live="polite" onClick={copyLink}>
+              {linkCopied ? 'Copied!' : 'Copy link'}
+            </button>
           </div>
         )}
       </div>

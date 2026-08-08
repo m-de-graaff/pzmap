@@ -13,6 +13,7 @@ import type { LivePlayer, LivePayload } from './live/protocol';
 import { connectToRoom, generateRoomCode } from './live/relayClient';
 import type { RoomStatus, RoomPublisher } from './live/relayClient';
 import { getRoomCodeFromHash, setRoomCodeInHash } from './live/roomHash';
+import { saveFileHandle, loadFileHandle, ensureReadPermission } from './live/fileHandleStore';
 import './App.css';
 
 export default function App() {
@@ -35,34 +36,8 @@ export default function App() {
   const [myConnId, setMyConnId] = useState<string | null>(null);
   const roomConnRef = useRef<{ publish: (p: LivePayload) => void; close: () => void } | null>(null);
 
-  const handlePickLiveFile = async () => {
-    try {
-      const handle = await pickLiveFile();
-      if (!handle) return;
-      liveStopRef.current?.();
-      setLiveError(null);
-      liveStopRef.current = startPolling(handle, 1000, {
-        onPayload: (payload) => {
-          setLivePlayers(payload.players);
-          roomConnRef.current?.publish(payload);
-        },
-        onStatus: (status, message) => {
-          setLiveStatus(status);
-          setLiveError(message ?? null);
-          if (status === 'error') setLivePlayers([]);
-        },
-      });
-    } catch {
-      setLiveStatus('error');
-      setLiveError('This browser cannot share a live location file (try Chrome or Edge).');
-    }
-  };
-
-  useEffect(() => () => liveStopRef.current?.(), []);
-
   const joinRoom = (code: string) => {
-    if (!relayUrl) return;
-    roomConnRef.current?.close();
+    if (!relayUrl || roomConnRef.current) return;
     setRoomCode(code);
     setRoomCodeInHash(code);
     roomConnRef.current = connectToRoom(relayUrl, code, {
@@ -72,9 +47,45 @@ export default function App() {
     });
   };
 
-  const handleStartRoom = () => joinRoom(generateRoomCode());
+  // Sharing always has a room behind it: whatever room the URL already named
+  // (so opening a friend's link and sharing puts you both in their room), or
+  // a fresh private one if none was active yet. There's no separate "start a
+  // room" step — sending the link *is* the friends feature.
+  const startSharing = (handle: FileSystemFileHandle) => {
+    liveStopRef.current?.();
+    setLiveError(null);
+    saveFileHandle(handle).catch(() => {});
+    liveStopRef.current = startPolling(handle, 1000, {
+      onPayload: (payload) => {
+        setLivePlayers(payload.players);
+        roomConnRef.current?.publish(payload);
+      },
+      onStatus: (status, message) => {
+        setLiveStatus(status);
+        setLiveError(message ?? null);
+        if (status === 'error') setLivePlayers([]);
+      },
+    });
+    joinRoom(getRoomCodeFromHash() ?? generateRoomCode());
+  };
 
-  const handleLeaveRoom = () => {
+  const handlePickLiveFile = async () => {
+    try {
+      const handle = await pickLiveFile();
+      if (!handle) return;
+      startSharing(handle);
+    } catch {
+      setLiveStatus('error');
+      setLiveError('This browser cannot share a live location file (try Chrome or Edge).');
+    }
+  };
+
+  const handleStopSharing = () => {
+    liveStopRef.current?.();
+    liveStopRef.current = null;
+    setLiveStatus('idle');
+    setLiveError(null);
+    setLivePlayers([]);
     roomConnRef.current?.close();
     roomConnRef.current = null;
     setRoomCode(null);
@@ -84,10 +95,26 @@ export default function App() {
     setRoomCodeInHash(null);
   };
 
+  useEffect(() => () => liveStopRef.current?.(), []);
+
+  // Opening a room link works whether or not you ever share your own
+  // location — you still see everyone already in it.
   useEffect(() => {
     const code = getRoomCodeFromHash();
     if (code) joinRoom(code);
     return () => roomConnRef.current?.close();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Resume a previously-picked file with no user interaction, so sharing is
+  // a true one-time setup rather than something you re-grant every visit.
+  useEffect(() => {
+    (async () => {
+      const handle = await loadFileHandle();
+      if (!handle) return;
+      if (!(await ensureReadPermission(handle))) return;
+      startSharing(handle);
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -153,8 +180,7 @@ export default function App() {
         roomCode={roomCode}
         roomStatus={roomStatus}
         roomMembers={roomPublishers}
-        onStartRoom={handleStartRoom}
-        onLeaveRoom={handleLeaveRoom}
+        onStopSharing={handleStopSharing}
       />
       <main className="map-main" aria-label="Knox Country map">
         <MapView
