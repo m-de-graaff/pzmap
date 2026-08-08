@@ -31,15 +31,15 @@ in this repo can do it on your behalf).
 pzmap Live streams your character's position to a file pzmap (https://pzmap.vercel.app) can
 read and draw on the map, live, while you play.
 
-**Solo**: install this mod, open pzmap, click "Share my location" in the sidebar, and pick your
-`Zomboid/Lua/pzmap-live.json` file once. No server, no account — everything stays on your
-machine and in your browser tab.
+**Solo**: install this mod, open pzmap, click "Share my location" and pick your
+`Zomboid/Lua/pzmap-live.json` file — once, ever. It's remembered after that: your marker just
+shows up on future visits, no re-picking. No server, no account.
 
-**Friends**: click "Start a room" in pzmap after sharing your location, and send the link.
-Anyone who opens it sees your marker live, without installing anything themselves.
+**Friends**: the moment you're sharing, pzmap gives you a link (Copy link in the sidebar).
+Send it — anyone who opens it sees your marker live, without installing anything themselves.
 
-**Whole server**: server admins can enable this mod's server half and run the companion
-`pzmap-bridge` tool to put every connected player on the map for anyone with the room link —
-see the pzmap repo README for setup.
+**Whole server**: server admins enable this mod's server half and run `pzmap-bridge` — a
+single downloadable program, no Node.js or npm required — to put every connected player on
+the map for anyone with the link. See the pzmap repo README for setup.
 
 Unofficial fan project, not affiliated with The Indie Stone.

@@ -13,19 +13,23 @@ An interactive map of Knox Country for Project Zomboid Build 42, built with Vite
 
 Install the **pzmap Live** Workshop mod (`mod/pzmapLive` in this repo) and it writes your
 character's position to `Zomboid/Lua/pzmap-live.json` while you play. Click "Share my
-location" in the sidebar, pick that file once, and your position updates live on the map with
-a "Follow me" toggle. Everything happens in your browser — no server, no account.
+location" in the sidebar and pick that file — **once, ever**. The browser remembers it after
+that: next time you open pzmap, your marker just appears, with a "Follow me" toggle, no
+re-picking, no button to click. Everything happens in your browser — no account, nothing to
+install beyond the mod itself.
 
-**Friends**: once you're sharing your own location, click "Start a room" — the URL gains a
-`room=` code. Send that link to a friend and they'll see your marker live without installing
-anything. This talks to a small Cloudflare relay (`relay/`); see that folder's README for how
-to run one yourself (`npx wrangler dev` locally, or `wrangler deploy` to Cloudflare, which
-needs your own Cloudflare account — that step isn't done for you).
+**Friends**: the moment you're sharing, the page URL carries a `room=` link — click "Copy
+link" and send it. Whoever opens it sees your marker live with zero setup on their end: no
+mod, no file, nothing. If they're also sharing their own location, opening your link puts
+both of you in the same room automatically.
 
-**Whole server**: a server admin can enable the mod's server half (writes every online
-player to the server's `Zomboid/Lua/pzmap-live-server.json`) and run the companion
-`pzmap-bridge` tool (`bridge/`) to publish the whole roster into a relay room. See `bridge/`'s
-README for the exact command.
+**Whole server**: a server admin enables the mod's server half (writes every online player to
+the server's `Zomboid/Lua/pzmap-live-server.json`) and runs `pzmap-bridge` — a single
+downloadable program, not an npm package — to publish the whole roster into a room. See
+`bridge/README.md`.
+
+The friends/server-wide relay is a small Cloudflare Worker (`relay/`) hosted once, centrally —
+not something each player or server owner deploys themselves.
 
 ## Getting started
 
