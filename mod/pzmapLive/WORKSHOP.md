@@ -39,7 +39,9 @@ shows up on future visits, no re-picking. No server, no account.
 Send it — anyone who opens it sees your marker live, without installing anything themselves.
 
 **Whole server**: server admins enable this mod's server half and run `pzmap-bridge` — a
-single downloadable program, no Node.js or npm required — to put every connected player on
-the map for anyone with the link. See the pzmap repo README for setup.
+single downloadable program, no Node.js or npm required — to put connected players on the
+map. Positions are tagged with in-game faction, and `pzmap-bridge --group <faction>` scopes a
+room to just that faction, so rival factions don't see each other by default. See the pzmap
+repo README for setup.
 
 Unofficial fan project, not affiliated with The Indie Stone.

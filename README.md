@@ -27,7 +27,12 @@ both of you in the same room automatically.
 the server's `Zomboid/Lua/pzmap-live-server.json`) and runs `pzmap-bridge` — a single
 downloadable program, not an npm package — to publish the whole roster into a room. Windows
 and Linux binaries both exist; there's a specific walkthrough for Pelican/Pterodactyl-style
-panels (which only allow one startup command) too. See `bridge/README.md`.
+panels (which only allow one startup command) too. Positions are tagged with the player's
+in-game faction, and `pzmap-bridge --group <faction>` scopes a room to just that faction —
+by default, showing everyone to everyone is a real fairness problem on servers with rival
+factions, so this isn't optional in the docs even though the flag itself is. See
+`bridge/README.md`. If you're self-hosting on your own PC, you likely don't need the bridge
+at all — same README, "Do you even need this?".
 
 The friends/server-wide relay is a small Cloudflare Worker (`relay/`) hosted once, centrally —
 not something each player or server owner deploys themselves.
