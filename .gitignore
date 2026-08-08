@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 
 .vercel
+
+# Local Docker self-host config (has your machine's absolute tile path)
+.env
