@@ -1,8 +1,10 @@
 import { createReadStream, existsSync, statSync } from 'node:fs'
 import { join, normalize } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
 import type { Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 
 // Local pzmap2dzi render output (see README "Isometric tiles").
 const TILES_DIR = process.env.PZMAP_TILES_DIR ?? 'D:/Development/pzmap-tiles/html/map_data/base'
@@ -39,5 +41,10 @@ function serveTiles(): Plugin {
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), serveTiles()],
+  plugins: [react(), tailwindcss(), serveTiles()],
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+    },
+  },
 })
