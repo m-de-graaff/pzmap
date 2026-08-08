@@ -29,10 +29,21 @@ local function writePayload(player)
     local facing = player:getDirectionAngle() or 0
     local updatedAt = math.floor(os.time() * 1000)
 
-    local json = string.format(
-        '{"v":%d,"players":[{"id":"%s","name":"%s","x":%d,"y":%d,"z":%d,"facing":%.1f,"updatedAt":%d}]}',
-        PROTOCOL_VERSION, id, name, x, y, z, facing, updatedAt
+    local playerJson = string.format(
+        '{"id":"%s","name":"%s","x":%d,"y":%d,"z":%d,"facing":%.1f,"updatedAt":%d',
+        id, name, x, y, z, facing, updatedAt
     )
+
+    -- Tag with the player's B42 faction, if any — kept consistent with the
+    -- server half's payload shape even though solo/friends sharing doesn't
+    -- currently use it for visibility scoping.
+    local faction = Faction.getPlayerFaction(player)
+    if faction then
+        playerJson = playerJson .. ',"group":"' .. escapeJSON(faction:getName()) .. '"'
+    end
+    playerJson = playerJson .. '}'
+
+    local json = string.format('{"v":%d,"players":[%s]}', PROTOCOL_VERSION, playerJson)
 
     writer:write(json)
     writer:close()

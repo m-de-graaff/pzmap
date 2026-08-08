@@ -26,10 +26,19 @@ local function playerJSON(player)
     local facing = player:getDirectionAngle() or 0
     local updatedAt = math.floor(os.time() * 1000)
 
-    return string.format(
-        '{"id":"%s","name":"%s","x":%d,"y":%d,"z":%d,"facing":%.1f,"updatedAt":%d}',
+    local json = string.format(
+        '{"id":"%s","name":"%s","x":%d,"y":%d,"z":%d,"facing":%.1f,"updatedAt":%d',
         id, name, x, y, z, facing, updatedAt
     )
+
+    -- Tag with the player's B42 faction, if any, so pzmap-bridge can scope
+    -- whole-server visibility to a single faction with --group.
+    local faction = Faction.getPlayerFaction(player)
+    if faction then
+        json = json .. ',"group":"' .. escapeJSON(faction:getName()) .. '"'
+    end
+
+    return json .. '}'
 end
 
 local function writePayload()
