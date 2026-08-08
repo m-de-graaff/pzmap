@@ -46,6 +46,28 @@ python main.py deploy && python main.py unpack && python main.py render base
 
 The dev server serves the pyramid at `/tiles/` (see `serveTiles` in `vite.config.ts`; override the location with the `PZMAP_TILES_DIR` env var). `src/data/tilesource.ts` reads `map_info.json` at runtime for the image size and isometric projection constants, so re-renders with different settings just work. For a production deployment, serve `…/html/map_data/base/` at `/tiles/` with any static file server.
 
+### Self-hosting on your LAN
+
+Once you've built `public/mapdata/` (above) and rendered your isometric tiles (above), you can
+serve the whole thing to your household over Docker instead of running `npm run dev`:
+
+```sh
+cp .env.example .env
+# edit .env: point PZMAP_TILES_DIR at your pzmap2dzi output
+# (the same …/html/map_data/base directory from "Isometric tiles" above)
+docker compose up -d --build
+```
+
+The map is now at `http://<this-machine's-LAN-IP>:8080` (default port, override via `PZMAP_PORT`
+in `.env`) for anyone on the same network. There's no login and no HTTPS — it's built for a
+trusted home LAN, not the internet. Don't forward the port through your router.
+
+To update after pulling new commits: `docker compose up -d --build`. To pick up a re-render of
+your tiles, no rebuild is needed — the tiles directory is mounted live, so a new render just
+appears (refresh the browser).
+
+Stop it with `docker compose down`.
+
 ## Notes
 
 - World coordinates are game tile coordinates (x east, y south).
