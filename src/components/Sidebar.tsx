@@ -5,6 +5,7 @@ import { LAYER_LABELS } from '../map/vectorLayer';
 import type { LayerKey } from '../map/vectorLayer';
 import type { LivePlayer } from '../live/protocol';
 import type { LiveSourceStatus } from '../live/fileSource';
+import type { RoomStatus, RoomPublisher } from '../live/relayClient';
 
 interface SidebarProps {
   query: string;
@@ -22,6 +23,12 @@ interface SidebarProps {
   followEnabled: boolean;
   onPickLiveFile: () => void;
   onToggleFollow: () => void;
+  relayEnabled: boolean;
+  roomCode: string | null;
+  roomStatus: RoomStatus | null;
+  roomMembers: RoomPublisher[];
+  onStartRoom: () => void;
+  onLeaveRoom: () => void;
 }
 
 export default function Sidebar({
@@ -29,6 +36,7 @@ export default function Sidebar({
   layerVis, onToggleLayer,
   results, selected, onSelect, onClearSelection, searchRef,
   liveStatus, liveError, livePlayers, followEnabled, onPickLiveFile, onToggleFollow,
+  relayEnabled, roomCode, roomStatus, roomMembers, onStartRoom, onLeaveRoom,
 }: SidebarProps) {
   const listRef = useRef<HTMLUListElement>(null);
   const [copied, setCopied] = useState(false);
@@ -128,6 +136,20 @@ export default function Sidebar({
             <code>Zomboid/Lua/pzmap-live.json</code> file once — it stays selected for this browser
             tab.
           </p>
+        )}
+        {relayEnabled && (
+          <div className="room-row">
+            {roomCode ? (
+              <>
+                <span className="room-status">
+                  {roomStatus === 'connected' ? `Room ${roomCode} · ${roomMembers.length} here` : 'Connecting…'}
+                </span>
+                <button type="button" className="btn" onClick={onLeaveRoom}>Leave room</button>
+              </>
+            ) : (
+              <button type="button" className="btn" onClick={onStartRoom}>Start a room</button>
+            )}
+          </div>
         )}
       </div>
 

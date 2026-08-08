@@ -156,6 +156,18 @@
   border-radius: 4px;
 }
 
+.room-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.room-status {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
 .switch-row {
   display: flex;
   align-items: center;

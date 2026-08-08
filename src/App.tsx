@@ -9,7 +9,10 @@ import { loadMapData, ALL_LAYERS } from './map/vectorLayer';
 import type { LayerKey } from './map/vectorLayer';
 import { pickLiveFile, startPolling } from './live/fileSource';
 import type { LiveSourceStatus } from './live/fileSource';
-import type { LivePlayer } from './live/protocol';
+import type { LivePlayer, LivePayload } from './live/protocol';
+import { connectToRoom, generateRoomCode } from './live/relayClient';
+import type { RoomStatus, RoomPublisher } from './live/relayClient';
+import { getRoomCodeFromHash, setRoomCodeInHash } from './live/roomHash';
 import './App.css';
 
 export default function App() {
@@ -25,6 +28,12 @@ export default function App() {
   const [followEnabled, setFollowEnabled] = useState(true);
   const liveStopRef = useRef<(() => void) | null>(null);
 
+  const relayUrl = import.meta.env.VITE_RELAY_URL as string | undefined;
+  const [roomCode, setRoomCode] = useState<string | null>(null);
+  const [roomStatus, setRoomStatus] = useState<RoomStatus | null>(null);
+  const [roomPublishers, setRoomPublishers] = useState<RoomPublisher[]>([]);
+  const roomConnRef = useRef<{ publish: (p: LivePayload) => void; close: () => void } | null>(null);
+
   const handlePickLiveFile = async () => {
     try {
       const handle = await pickLiveFile();
@@ -32,7 +41,10 @@ export default function App() {
       liveStopRef.current?.();
       setLiveError(null);
       liveStopRef.current = startPolling(handle, 1000, {
-        onPayload: (payload) => setLivePlayers(payload.players),
+        onPayload: (payload) => {
+          setLivePlayers(payload.players);
+          roomConnRef.current?.publish(payload);
+        },
         onStatus: (status, message) => {
           setLiveStatus(status);
           setLiveError(message ?? null);
@@ -46,6 +58,35 @@ export default function App() {
   };
 
   useEffect(() => () => liveStopRef.current?.(), []);
+
+  const joinRoom = (code: string) => {
+    if (!relayUrl) return;
+    roomConnRef.current?.close();
+    setRoomCode(code);
+    setRoomCodeInHash(code);
+    roomConnRef.current = connectToRoom(relayUrl, code, {
+      onStatus: setRoomStatus,
+      onState: setRoomPublishers,
+    });
+  };
+
+  const handleStartRoom = () => joinRoom(generateRoomCode());
+
+  const handleLeaveRoom = () => {
+    roomConnRef.current?.close();
+    roomConnRef.current = null;
+    setRoomCode(null);
+    setRoomStatus(null);
+    setRoomPublishers([]);
+    setRoomCodeInHash(null);
+  };
+
+  useEffect(() => {
+    const code = getRoomCodeFromHash();
+    if (code) joinRoom(code);
+    return () => roomConnRef.current?.close();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -80,6 +121,13 @@ export default function App() {
     });
   };
 
+  const mergedLivePlayers: LivePlayer[] = [
+    ...livePlayers,
+    ...roomPublishers.flatMap(({ connId, payload }) =>
+      payload.players.map((p) => ({ ...p, id: `${connId}:${p.id}` })),
+    ),
+  ];
+
   return (
     <div className="app">
       <Sidebar
@@ -98,14 +146,20 @@ export default function App() {
         followEnabled={followEnabled}
         onPickLiveFile={handlePickLiveFile}
         onToggleFollow={() => setFollowEnabled((v) => !v)}
+        relayEnabled={Boolean(relayUrl)}
+        roomCode={roomCode}
+        roomStatus={roomStatus}
+        roomMembers={roomPublishers}
+        onStartRoom={handleStartRoom}
+        onLeaveRoom={handleLeaveRoom}
       />
       <main className="map-main" aria-label="Knox Country map">
         <MapView
           layerVis={layerVis}
           selected={selected}
           onSelect={setSelected}
-          livePlayers={livePlayers}
-          followLiveId={followEnabled ? (livePlayers[0]?.id ?? null) : null}
+          livePlayers={mergedLivePlayers}
+          followLiveId={followEnabled ? (mergedLivePlayers[0]?.id ?? null) : null}
         />
       </main>
     </div>
