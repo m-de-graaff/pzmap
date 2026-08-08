@@ -46,7 +46,11 @@ if (target && target !== 'linux-x64') {
   process.exit(1);
 }
 
-async function downloadLinuxNodeBinary() {
+// `work` is created by the caller (and its cleanup registered) before this
+// runs, so a throw here never leaves an untracked temp dir behind — the
+// caller's finally block removes whatever was created regardless of where
+// this fails.
+async function downloadLinuxNodeBinary(work) {
   const archiveName = `node-${NODE_VERSION}-linux-x64.tar.xz`;
   const baseUrl = `https://nodejs.org/dist/${NODE_VERSION}`;
 
@@ -58,7 +62,6 @@ async function downloadLinuxNodeBinary() {
   if (!match) throw new Error(`No checksum entry for ${archiveName}`);
   const expectedHash = match.split(/\s+/)[0];
 
-  const work = mkdtempSync(join(tmpdir(), 'pzmap-bridge-linux-node-'));
   const archivePath = join(work, archiveName);
 
   console.log(`Downloading ${archiveName}...`);
@@ -69,7 +72,6 @@ async function downloadLinuxNodeBinary() {
   console.log('Verifying checksum...');
   const actualHash = createHash('sha256').update(readFileSync(archivePath)).digest('hex');
   if (actualHash !== expectedHash) {
-    rmSync(work, { recursive: true, force: true });
     throw new Error(`Checksum mismatch for ${archiveName}: expected ${expectedHash}, got ${actualHash}`);
   }
   console.log('Checksum verified.');
@@ -81,54 +83,58 @@ async function downloadLinuxNodeBinary() {
   const nodeBinary = join(work, `node-${NODE_VERSION}-linux-x64`, 'bin', 'node');
   if (!existsSync(nodeBinary)) throw new Error(`Extracted archive did not contain bin/node at the expected path`);
 
-  return { nodeBinary, cleanup: () => rmSync(work, { recursive: true, force: true }) };
+  return nodeBinary;
 }
 
-console.log('Bundling to a single CJS file...');
-// shell: true is required on Windows to invoke npx (a .cmd file) at all —
-// safe here since every argument below is a static literal, never user input.
-execFileSync('npx', ['esbuild', 'dist/sea-entry.js', '--bundle', '--platform=node', '--format=cjs', '--outfile=sea/bundle.cjs'], {
-  cwd: bridgeDir,
-  stdio: 'inherit',
-  shell: true,
-});
-
-console.log('Generating the SEA blob...');
-execFileSync(process.execPath, ['--experimental-sea-config', 'sea-config.json'], {
-  cwd: seaDir,
-  stdio: 'inherit',
-});
-
-let outName;
 let cleanup = () => {};
 
-if (target === 'linux-x64') {
-  const { nodeBinary, cleanup: cleanupDownload } = await downloadLinuxNodeBinary();
-  cleanup = cleanupDownload;
-  outName = 'pzmap-bridge-linux-x64';
-  console.log('Copying the downloaded Linux Node binary...');
-  copyFileSync(nodeBinary, join(seaDir, outName));
-} else {
-  outName = process.platform === 'win32' ? 'pzmap-bridge.exe' : 'pzmap-bridge';
-  console.log('Copying the local Node binary...');
-  copyFileSync(process.execPath, join(seaDir, outName));
-}
+try {
+  console.log('Bundling to a single CJS file...');
+  // shell: true is required on Windows to invoke npx (a .cmd file) at all —
+  // safe here since every argument below is a static literal, never user input.
+  execFileSync('npx', ['esbuild', 'dist/sea-entry.js', '--bundle', '--platform=node', '--format=cjs', '--outfile=sea/bundle.cjs'], {
+    cwd: bridgeDir,
+    stdio: 'inherit',
+    shell: true,
+  });
 
-console.log('Injecting the blob (postject)...');
-execFileSync('npx', [
-  'postject', `sea/${outName}`, 'NODE_SEA_BLOB', 'sea/sea-prep.blob',
-  '--sentinel-fuse', FUSE,
-], {
-  cwd: bridgeDir,
-  stdio: 'inherit',
-  shell: true,
-});
+  console.log('Generating the SEA blob...');
+  execFileSync(process.execPath, ['--experimental-sea-config', 'sea-config.json'], {
+    cwd: seaDir,
+    stdio: 'inherit',
+  });
 
-cleanup();
+  let outName;
 
-console.log(`\nDone: bridge/sea/${outName}`);
-if (outName.endsWith('.exe')) {
-  console.log('It is unsigned — Windows SmartScreen may prompt on first run (More info -> Run anyway).');
-} else {
-  console.log('Remember: chmod +x it before running on Linux (Windows/NTFS doesn\'t carry the executable bit).');
+  if (target === 'linux-x64') {
+    const work = mkdtempSync(join(tmpdir(), 'pzmap-bridge-linux-node-'));
+    cleanup = () => rmSync(work, { recursive: true, force: true });
+    const nodeBinary = await downloadLinuxNodeBinary(work);
+    outName = 'pzmap-bridge-linux-x64';
+    console.log('Copying the downloaded Linux Node binary...');
+    copyFileSync(nodeBinary, join(seaDir, outName));
+  } else {
+    outName = process.platform === 'win32' ? 'pzmap-bridge.exe' : 'pzmap-bridge';
+    console.log('Copying the local Node binary...');
+    copyFileSync(process.execPath, join(seaDir, outName));
+  }
+
+  console.log('Injecting the blob (postject)...');
+  execFileSync('npx', [
+    'postject', `sea/${outName}`, 'NODE_SEA_BLOB', 'sea/sea-prep.blob',
+    '--sentinel-fuse', FUSE,
+  ], {
+    cwd: bridgeDir,
+    stdio: 'inherit',
+    shell: true,
+  });
+
+  console.log(`\nDone: bridge/sea/${outName}`);
+  if (outName.endsWith('.exe')) {
+    console.log('It is unsigned — Windows SmartScreen may prompt on first run (More info -> Run anyway).');
+  } else {
+    console.log('Remember: chmod +x it before running on Linux (Windows/NTFS doesn\'t carry the executable bit).');
+  }
+} finally {
+  cleanup();
 }

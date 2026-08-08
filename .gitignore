@@ -37,3 +37,4 @@ bridge/sea/bundle.cjs
 bridge/sea/sea-prep.blob
 bridge/sea/*.exe
 bridge/sea/pzmap-bridge-linux-x64
+bridge/sea/pzmap-bridge
