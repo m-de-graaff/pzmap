@@ -8,7 +8,7 @@ import type { TileSource } from '../data/tilesource';
 import { loadMapData, createVectorLayer, streetAt } from '../map/vectorLayer';
 import type { MapData, IsoTransform, LayerKey } from '../map/vectorLayer';
 import { createStreetLabelLayer } from '../map/labelLayer';
-import { TOWNS, POIS, CATEGORIES } from '../data/locations';
+import { TOWNS } from '../data/locations';
 import type { Location } from '../data/locations';
 
 const TRANSPARENT_TILE =
@@ -66,7 +66,6 @@ export default function MapView({ layerVis, selected, onSelect }: MapViewProps) 
   const mapRef = useRef<L.Map | null>(null);
   const projRef = useRef<Projection | null>(null);
   const dataRef = useRef<MapData | null>(null);
-  const poiLayerRef = useRef<L.LayerGroup | null>(null);
   const highlightRef = useRef<L.Layer | null>(null);
   const vectorLayerRef = useRef<L.GridLayer | null>(null);
   const labelLayerRef = useRef<L.GridLayer | null>(null);
@@ -205,7 +204,6 @@ export default function MapView({ layerVis, selected, onSelect }: MapViewProps) 
       }
       applyZoomClass();
 
-      poiLayerRef.current = L.layerGroup().addTo(map);
       setReady((n) => n + 1);
     });
 
@@ -215,7 +213,6 @@ export default function MapView({ layerVis, selected, onSelect }: MapViewProps) 
       map?.remove();
       mapRef.current = null;
       projRef.current = null;
-      poiLayerRef.current = null;
       highlightRef.current = null;
       vectorLayerRef.current = null;
       labelLayerRef.current = null;
@@ -229,25 +226,6 @@ export default function MapView({ layerVis, selected, onSelect }: MapViewProps) 
     vectorLayerRef.current?.redraw();
     labelLayerRef.current?.redraw();
   }, [layerVis]);
-
-  useEffect(() => {
-    const layer = poiLayerRef.current;
-    const proj = projRef.current;
-    if (!layer || !proj) return;
-    layer.clearLayers();
-    for (const poi of POIS) {
-      const marker = L.circleMarker(proj.project([poi.x, poi.y]), {
-        radius: 6,
-        color: '#0a0a0a',
-        weight: 1.5,
-        fillColor: CATEGORIES[poi.cat].color,
-        fillOpacity: 1,
-      });
-      marker.bindTooltip(poi.name, { direction: 'top', offset: [0, -6] });
-      marker.on('click', () => onSelectRef.current(poi));
-      layer.addLayer(marker);
-    }
-  }, [ready]);
 
   // Fly to and highlight the current selection.
   useEffect(() => {
