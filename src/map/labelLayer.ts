@@ -4,11 +4,8 @@
 // gate doubles as density control — closer zoom lets shorter streets label.
 
 import L from 'leaflet';
-import { buildStreetIndex } from './vectorLayer';
+import { buildStreetIndex, CELL, CELLS_X, CELLS_Y } from './vectorLayer';
 import type { IsoTransform, LayerKey, MapData, StreetSeg } from './vectorLayer';
-
-const CELL = 300;
-const CELLS_X = 66;
 
 /** Screen px per world unit below which no labels draw (z ≈ −5 for B42). */
 const MIN_SCALE = 1;
@@ -97,8 +94,10 @@ const StreetLabelLayer = L.GridLayer.extend({
     }
     const idx = buildStreetIndex(data.streets);
     const candidates = new Set<number>();
-    for (let cy = Math.max(0, Math.floor(wMinY / CELL)); cy <= Math.floor(wMaxY / CELL); cy++) {
-      for (let cx = Math.max(0, Math.floor(wMinX / CELL)); cx <= Math.floor(wMaxX / CELL); cx++) {
+    const cy1 = Math.min(CELLS_Y - 1, Math.floor(wMaxY / CELL));
+    const cx1 = Math.min(CELLS_X - 1, Math.floor(wMaxX / CELL));
+    for (let cy = Math.max(0, Math.floor(wMinY / CELL)); cy <= cy1; cy++) {
+      for (let cx = Math.max(0, Math.floor(wMinX / CELL)); cx <= cx1; cx++) {
         const arr = idx.get(cy * CELLS_X + cx);
         if (arr) for (const i of arr) candidates.add(i);
       }

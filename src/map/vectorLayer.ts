@@ -50,9 +50,9 @@ export const LAYER_LABELS: Record<LayerKey, string> = {
 
 export const ALL_LAYERS = Object.keys(LAYER_LABELS) as readonly LayerKey[];
 
-const CELL = 300;
-const CELLS_X = 66;
-const CELLS_Y = 53;
+export const CELL = 300;
+export const CELLS_X = 66;
+export const CELLS_Y = 53;
 const WORLD_W = CELLS_X * CELL;
 const WORLD_H = CELLS_Y * CELL;
 
@@ -152,22 +152,10 @@ export function buildIndex(data: MapData): Map<number, Feat[]> {
     for (const f of data.base.roads[cls]) add(f, STYLES[cls], cls);
     order++;
   }
+  order = DRAW_ORDER.length + 1;
   for (const [cat, feats] of Object.entries(data.buildings)) {
-    const style = STYLES[cat] ?? STYLES.Other;
-    for (const f of feats) {
-      const [minX, minY, maxX, maxY] = bboxOf(f);
-      const feat: Feat = {
-        rings: f,
-        style: { ...style, minScale: BUILDING_MIN_SCALE },
-        order: DRAW_ORDER.length + 1,
-        maxDim: Math.max(maxX - minX, maxY - minY),
-        key: 'buildings',
-      };
-      const key = Math.floor(minY / CELL) * CELLS_X + Math.floor(minX / CELL);
-      let arr = index.get(key);
-      if (!arr) index.set(key, (arr = []));
-      arr.push(feat);
-    }
+    const style = { ...(STYLES[cat] ?? STYLES.Other), minScale: BUILDING_MIN_SCALE };
+    for (const f of feats) add(f, style, 'buildings');
   }
   for (const arr of index.values()) arr.sort((a, b) => a.order - b.order);
   indexCache = index;
