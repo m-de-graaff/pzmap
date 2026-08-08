@@ -1,7 +1,10 @@
 import type { LivePayload } from './protocol';
 
 export const MAX_ROOM_MEMBERS = 12;
-export const MAX_PAYLOAD_BYTES = 8192;
+// Sized for the server bridge's whole-roster payload (piece 3), not just a
+// browser's 1-player publish — a few hundred online players still fits well
+// under this, while still bounding what a single publish can contain.
+export const MAX_PAYLOAD_BYTES = 65536;
 export const MIN_PUBLISH_INTERVAL_MS = 400;
 export const ROOM_CODE_ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789';
 

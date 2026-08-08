@@ -44,8 +44,13 @@ export function main(argv: string[]) {
     },
   });
 
-  process.on('SIGINT', () => {
+  const shutdown = () => {
     conn.close();
     process.exit(0);
-  });
+  };
+  // SIGINT: Ctrl+C. SIGTERM: the default signal from systemd, Docker, and
+  // most process managers — without handling it, a managed stop skips the
+  // graceful WebSocket close entirely.
+  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', shutdown);
 }
