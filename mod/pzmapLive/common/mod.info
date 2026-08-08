@@ -1,0 +1,6 @@
+name=pzmap Live
+id=pzmapLive
+author=m-de-graaff
+description=Streams your character's live position to a local file that pzmap.vercel.app (or your own pzmap deployment) can read and show on the map. No server required for solo use.
+modversion=1
+versionMin=42.0.0
