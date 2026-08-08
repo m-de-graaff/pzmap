@@ -102,64 +102,65 @@
   height: 11px;
 }
 
-/* ---------- map layers panel ---------- */
+/* ---------- filter bar ---------- */
 
-.layers-panel {
-  margin: 0 16px 14px;
+.filter-bar {
+  margin: 0 16px 12px;
+}
+
+.switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: 36px;
+  padding: 0 12px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--panel-2);
-}
-
-.layers-panel summary {
-  padding: 8px 12px;
-  font-size: 12.5px;
   color: var(--text-dim);
+  font-size: 13px;
   cursor: pointer;
-  border-radius: 8px;
-  transition: color 150ms ease, background-color 150ms ease;
+  transition: color 150ms ease, border-color 150ms ease;
 }
 
-.layers-panel summary:hover {
+.switch-row:hover {
   color: var(--text);
-  background: var(--panel-3);
+  border-color: var(--border-strong);
 }
 
-.layers-panel[open] summary {
-  border-bottom: 1px solid var(--border);
-  border-radius: 8px 8px 0 0;
-}
-
-.layer-rows {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  padding: 6px 8px 8px;
-}
-
-.layer-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 28px;
-  padding: 2px 6px;
-  border-radius: 6px;
-  font-size: 12.5px;
-  color: var(--text-dim);
-  cursor: pointer;
-  transition: color 150ms ease, background-color 150ms ease;
-}
-
-.layer-row:hover {
+.switch-row[aria-checked='true'] {
   color: var(--text);
-  background: var(--panel-3);
 }
 
-.layer-row input {
-  accent-color: var(--accent);
+.switch-track {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--border-strong);
+  flex: none;
+  transition: background-color 150ms ease;
+}
+
+.switch-row[aria-checked='true'] .switch-track {
+  background: var(--accent);
+}
+
+.switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
   width: 14px;
   height: 14px;
-  margin: 0;
-  flex: none;
+  border-radius: 50%;
+  background: #ffffff;
+  transition: transform 150ms var(--ease-out);
+}
+
+.switch-row[aria-checked='true'] .switch-knob {
+  transform: translateX(14px);
 }
 
 /* ---------- detail card ---------- */
@@ -472,6 +473,10 @@
 
   .btn:active {
     transform: none;
+  }
+
+  .switch-knob {
+    transition: none;
   }
 }
 

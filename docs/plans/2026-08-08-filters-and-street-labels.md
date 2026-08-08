@@ -2,6 +2,12 @@
 
 > **To execute:** use the `executing-plans` skill. Steps use `- [ ]` for tracking.
 
+> **Amendment (2026-08-08, during execution):** Mark removed the category-chip
+> filter UI (and all `activeCats` wiring) from the app while Tasks 1–2 were in
+> flight. Task 4 (chip counts/active state) is therefore dropped, and Task 3's
+> select sits between the search box and the layers panel instead of "above the
+> chips". Tasks 1–3 executed as written otherwise.
+
 **Goal:** Add map-layer visibility toggles, rotated street-name labels above the tiles, a town filter, and per-category counts on the filter chips.
 
 **Architecture:** Layer visibility is a `ReadonlySet<LayerKey>` owned by `App`, threaded to the Sidebar (checkbox panel) and to `MapView`, where the canvas vector layer filters features by key and redraws on change. Street names render in a **new** canvas `L.GridLayer` at `zIndex: 3` — *above* the DZI tiles (the existing vector underlay sits beneath them at `zIndex: 1`, so labels drawn there would be invisible wherever tiles exist). Town filter and chip counts are pure state/derivation changes in `App`/`Sidebar`.

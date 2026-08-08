@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { CATEGORIES, TOWNS } from '../data/locations';
 import type { Location } from '../data/locations';
-import { ALL_LAYERS, LAYER_LABELS } from '../map/vectorLayer';
+import { LAYER_LABELS } from '../map/vectorLayer';
 import type { LayerKey } from '../map/vectorLayer';
 
 interface SidebarProps {
@@ -44,6 +44,7 @@ export default function Sidebar({
 
   const showingSearch = query.trim().length > 0;
   const list = showingSearch ? results : TOWNS;
+  const streetNamesOn = layerVis.has('streetNames');
 
   return (
     <aside className="sidebar">
@@ -69,21 +70,20 @@ export default function Sidebar({
         <kbd className="search-kbd" aria-hidden="true">/</kbd>
       </div>
 
-      <details className="layers-panel">
-        <summary>Map layers</summary>
-        <div className="layer-rows" role="group" aria-label="Toggle map layers">
-          {ALL_LAYERS.map((key) => (
-            <label key={key} className="layer-row">
-              <input
-                type="checkbox"
-                checked={layerVis.has(key)}
-                onChange={() => onToggleLayer(key)}
-              />
-              {LAYER_LABELS[key]}
-            </label>
-          ))}
-        </div>
-      </details>
+      <div className="filter-bar">
+        <button
+          type="button"
+          role="switch"
+          aria-checked={streetNamesOn}
+          className="switch-row"
+          onClick={() => onToggleLayer('streetNames')}
+        >
+          <span className="switch-label">{LAYER_LABELS.streetNames}</span>
+          <span className="switch-track" aria-hidden="true">
+            <span className="switch-knob" />
+          </span>
+        </button>
+      </div>
 
       {selected && (
         <section className="detail-card" aria-label={`Details for ${selected.name}`}>
