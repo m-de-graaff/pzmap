@@ -8,11 +8,17 @@
   },
   "scripts": {
     "build": "tsc -b",
+    "build:exe": "npm run build && node sea/build.mjs",
     "test": "vitest run"
   },
   "devDependencies": {
     "@types/node": "^24.13.3",
+    "esbuild": "^0.28.1",
+    "postject": "^1.0.0-alpha.6",
     "typescript": "~6.0.2",
     "vitest": "^4.1.10"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true
   }
 }
