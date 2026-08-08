@@ -6,6 +6,17 @@ compatibility_date = "2026-08-01"
 name = "ROOMS"
 class_name = "Room"
 
+# Throttles room-join attempts per source IP — a backstop against automated
+# guessing of --room-name/--room-password derived codes (see
+# bridge/src/roomCode.ts). This limits connection attempts, not published
+# messages — see roomLogic.ts's MIN_PUBLISH_INTERVAL_MS for that.
+[[ratelimits]]
+name = "ROOM_JOIN_LIMITER"
+namespace_id = "1"
+[ratelimits.simple]
+limit = 20
+period = 60
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["Room"]

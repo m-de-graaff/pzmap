@@ -42,6 +42,16 @@ If your server doesn't use factions at all, just omit `--group` and use a single
 or `--room-name`/`--room-password` — same fairness caveat applies, since everyone shares one
 view.
 
+**Password hygiene:** `--room-password` on the command line ends up in that plaintext wherever
+the launch command itself is stored or visible (a panel's saved startup command, `ps`/`/proc`
+on the host, shell history) — anyone who can read it gets the same access as anyone in the
+faction, no relay access needed. Set `PZMAP_BRIDGE_ROOM_PASSWORD` as an environment variable
+instead wherever you can (most panels, including Pelican/Pterodactyl, let you set per-server
+env vars separately from the visible startup command) — the bridge reads it automatically, no
+flag needed. Also actually make it a real password: this scheme's whole security rests on it
+being hard to guess, and the relay currently has no throttle on join attempts beyond a modest
+per-IP rate limit, so a short or common password is guessable given enough time.
+
 ## Run it — Windows (no Node.js, no npm)
 
 Download `pzmap-bridge.exe` and run:
@@ -86,17 +96,25 @@ been running a minute).
 1. Upload `pzmap-bridge-linux-x64` to `/home/container/` via the panel's file manager or SFTP.
 2. Make it executable. If the file manager has a permissions/chmod option, use that; otherwise
    an SFTP client with chmod support (e.g. FileZilla: right-click → File permissions) works.
-3. Edit the server's **startup command** (in the panel's server settings) to background the
+3. If your panel has a per-server **environment variables** section (Pelican and Pterodactyl
+   both do, usually as egg-defined variables), set `PZMAP_BRIDGE_ROOM_PASSWORD` there instead
+   of putting `--room-password` in the startup command — the startup command is typically
+   visible to more people (co-admins, support staff, anyone with panel read access) than a
+   dedicated env var field, and it's what ends up in the panel's saved config either way.
+4. Edit the server's **startup command** (in the panel's server settings) to background the
    bridge first, then run the original command unchanged:
 
    ```
-   /home/container/pzmap-bridge-linux-x64 --file /home/container/.cache/Lua/pzmap-live-server.json --relay wss://<your-relay> --group Outlaws --room-name outlaws --room-password <secret> & export PATH="./jre64/bin:$PATH" ; export LD_LIBRARY_PATH="./linux64:./natives:.:./jre64/lib/amd64:${LD_LIBRARY_PATH}" ; JSIG="libjsig.so" ; LD_PRELOAD="${LD_PRELOAD}:${JSIG}" ./ProjectZomboid64 -port {{SERVER_PORT}} -udpport {{STEAM_PORT}} -cachedir=/home/container/.cache -servername "{{SERVER_NAME}}" -adminusername {{ADMIN_USER}} -adminpassword "{{ADMIN_PASSWORD}}"
+   /home/container/pzmap-bridge-linux-x64 --file /home/container/.cache/Lua/pzmap-live-server.json --relay wss://<your-relay> --group Outlaws --room-name outlaws & export PATH="./jre64/bin:$PATH" ; export LD_LIBRARY_PATH="./linux64:./natives:.:./jre64/lib/amd64:${LD_LIBRARY_PATH}" ; JSIG="libjsig.so" ; LD_PRELOAD="${LD_PRELOAD}:${JSIG}" ./ProjectZomboid64 -port {{SERVER_PORT}} -udpport {{STEAM_PORT}} -cachedir=/home/container/.cache -servername "{{SERVER_NAME}}" -adminusername {{ADMIN_USER}} -adminpassword "{{ADMIN_PASSWORD}}"
    ```
 
    Only the very front changed — `/home/container/pzmap-bridge-linux-x64 ... &` was added
-   before the rest, unchanged. The `&` is what makes it a background job instead of replacing
-   the game server as the main process. Add another `... &` line per faction if you're exposing
-   more than one.
+   before the rest, unchanged, and `--room-password` is gone since step 3's env var supplies
+   it instead. The `&` is what makes it a background job instead of replacing the game server
+   as the main process. Add another `... &` line per faction if you're exposing more than one
+   — each needs its own `PZMAP_BRIDGE_ROOM_PASSWORD`, so if your panel only gives you one env
+   var slot per server, fall back to `--room-password` on the command line for the extra ones
+   (same exposure caveat as above) or use plain `--room <code>` for those instead.
 
 The same technique — background the bridge, then the real command — works for any panel or
 custom launch script, not just this specific egg; adjust the file path and the rest of the

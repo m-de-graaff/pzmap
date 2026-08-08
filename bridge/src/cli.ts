@@ -4,7 +4,8 @@ import { connectToRoom } from './relayPublisher.js';
 import { filterByGroup } from './groupFilter.js';
 import { deriveRoomCode } from './roomCode.js';
 
-const USAGE = 'Usage: pzmap-bridge --file <path> --relay <ws-url> (--room <code> | --room-name <name> --room-password <password>) [--group <faction>] [--interval-ms 1000]';
+const USAGE = 'Usage: pzmap-bridge --file <path> --relay <ws-url> (--room <code> | --room-name <name> --room-password <password>) [--group <faction>] [--interval-ms 1000]\n'
+  + '  --room-password can also come from the PZMAP_BRIDGE_ROOM_PASSWORD env var — prefer that on shared hosts/panels, since CLI arguments are visible in process listings (ps, /proc/<pid>/cmdline) and are often stored in plaintext wherever the launch command itself is kept.';
 
 interface CliArgs {
   file: string;
@@ -26,7 +27,9 @@ function parseArgs(argv: string[]): CliArgs {
 
   const roomFlag = get('--room');
   const roomName = get('--room-name');
-  const roomPassword = get('--room-password');
+  // Prefer the env var over the CLI flag when both happen to be present —
+  // whichever caller went to the trouble of using the safer form wins.
+  const roomPassword = process.env.PZMAP_BRIDGE_ROOM_PASSWORD || get('--room-password');
 
   let room: string;
   if (roomFlag) {

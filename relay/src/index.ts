@@ -11,6 +11,7 @@ import type { PublisherState } from './roomLogic';
 
 interface Env {
   ROOMS: DurableObjectNamespace<Room>;
+  ROOM_JOIN_LIMITER: RateLimit;
 }
 
 export class Room extends DurableObject<Env> {
@@ -100,6 +101,12 @@ export default {
 
     const code = match[1];
     if (!isValidRoomCode(code)) return new Response('invalid room code', { status: 400 });
+
+    // Keyed on IP, not room code, so guessing many different codes from one
+    // source doesn't dodge the limit by spreading attempts across rooms.
+    const ip = request.headers.get('CF-Connecting-IP') ?? 'unknown';
+    const { success } = await env.ROOM_JOIN_LIMITER.limit({ key: ip });
+    if (!success) return new Response('too many room-join attempts, slow down', { status: 429 });
 
     const id = env.ROOMS.idFromName(code);
     return env.ROOMS.get(id).fetch(request);

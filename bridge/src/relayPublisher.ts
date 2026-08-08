@@ -1,7 +1,8 @@
 // Mirrors src/live/relayClient.ts's connectToRoom in the pzmap web app —
 // reused unchanged; Node's built-in WebSocket satisfies the same interface.
-// generateRoomCode is omitted: the bridge always joins a room an admin
-// already started from the browser, it never creates one.
+// generateRoomCode is omitted: the bridge connects to a room identified by
+// an explicit --room code or a --room-name/--room-password pair (see
+// roomCode.ts), never generates one of its own.
 
 import type { LivePayload } from './protocol.js';
 
