@@ -1,0 +1,9 @@
+services:
+  pzmap:
+    build: .
+    image: pzmap:local
+    restart: unless-stopped
+    ports:
+      - "${PZMAP_PORT:-8080}:80"
+    volumes:
+      - "${PZMAP_TILES_DIR}:/tiles:ro"
