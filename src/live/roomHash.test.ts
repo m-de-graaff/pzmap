@@ -37,4 +37,8 @@ describe('writeRoomCode', () => {
   it('produces an empty string when removing the only param', () => {
     expect(writeRoomCode('#room=ab234567', null)).toBe('');
   });
+
+  it('removes a leading room param without leaving a stray & when other params follow', () => {
+    expect(writeRoomCode('#room=ab234567&y=200', null)).toBe('y=200');
+  });
 });

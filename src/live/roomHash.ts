@@ -13,10 +13,12 @@ export function writeRoomCode(hash: string, code: string | null): string {
   const body = stripHash(hash);
   const hasRoom = ROOM_PARAM_RE.test(body);
   if (hasRoom) {
-    return body.replace(ROOM_PARAM_RE, (match) => {
-      const prefix = match.startsWith('&') ? '&' : '';
-      return code ? `${prefix}room=${code}` : '';
-    });
+    return body
+      .replace(ROOM_PARAM_RE, (match) => {
+        const prefix = match.startsWith('&') ? '&' : '';
+        return code ? `${prefix}room=${code}` : '';
+      })
+      .replace(/^&/, '');
   }
   if (!code) return body;
   return body ? `${body}&room=${code}` : `room=${code}`;

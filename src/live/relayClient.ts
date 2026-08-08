@@ -10,6 +10,10 @@ export interface RoomPublisher {
 export interface RoomClientHandlers {
   onStatus: (status: RoomStatus, message?: string) => void;
   onState: (publishers: RoomPublisher[]) => void;
+  // Called with this connection's own connId on every (re)connect, so a
+  // caller that also publishes into the room can filter its own echoed
+  // entry back out of onState's list.
+  onWelcome?: (connId: string) => void;
 }
 
 const ROOM_CODE_ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789';
@@ -43,6 +47,7 @@ export function connectToRoom(
 
     ws.onmessage = (event: { data: string }) => {
       const msg = JSON.parse(event.data);
+      if (msg.type === 'welcome') handlers.onWelcome?.(msg.connId);
       if (msg.type === 'state') handlers.onState(msg.publishers);
       if (msg.type === 'error') handlers.onStatus('error', msg.message);
     };

@@ -81,6 +81,14 @@ describe('connectToRoom', () => {
     expect(onState).toHaveBeenCalledWith([{ connId: 'x', payload: { v: 1, players: [] } }]);
   });
 
+  it('reports this connection\'s own connId from the welcome message', () => {
+    const onWelcome = vi.fn();
+    connectToRoom('ws://relay.example', 'ab234567', { onStatus: vi.fn(), onState: vi.fn(), onWelcome }, FakeWebSocket as never);
+    FakeWebSocket.instances[0].serverMessage({ type: 'welcome', connId: 'me-1' });
+
+    expect(onWelcome).toHaveBeenCalledWith('me-1');
+  });
+
   it('publish sends a publish message once open, and does nothing before that', () => {
     const conn = connectToRoom('ws://relay.example', 'ab234567', { onStatus: vi.fn(), onState: vi.fn() }, FakeWebSocket as never);
     const ws = FakeWebSocket.instances[0];

@@ -32,6 +32,7 @@ export default function App() {
   const [roomCode, setRoomCode] = useState<string | null>(null);
   const [roomStatus, setRoomStatus] = useState<RoomStatus | null>(null);
   const [roomPublishers, setRoomPublishers] = useState<RoomPublisher[]>([]);
+  const [myConnId, setMyConnId] = useState<string | null>(null);
   const roomConnRef = useRef<{ publish: (p: LivePayload) => void; close: () => void } | null>(null);
 
   const handlePickLiveFile = async () => {
@@ -67,6 +68,7 @@ export default function App() {
     roomConnRef.current = connectToRoom(relayUrl, code, {
       onStatus: setRoomStatus,
       onState: setRoomPublishers,
+      onWelcome: setMyConnId,
     });
   };
 
@@ -78,6 +80,7 @@ export default function App() {
     setRoomCode(null);
     setRoomStatus(null);
     setRoomPublishers([]);
+    setMyConnId(null);
     setRoomCodeInHash(null);
   };
 
@@ -123,9 +126,9 @@ export default function App() {
 
   const mergedLivePlayers: LivePlayer[] = [
     ...livePlayers,
-    ...roomPublishers.flatMap(({ connId, payload }) =>
-      payload.players.map((p) => ({ ...p, id: `${connId}:${p.id}` })),
-    ),
+    ...roomPublishers
+      .filter(({ connId }) => connId !== myConnId)
+      .flatMap(({ connId, payload }) => payload.players.map((p) => ({ ...p, id: `${connId}:${p.id}` }))),
   ];
 
   return (
