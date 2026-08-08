@@ -9,6 +9,7 @@
   "scripts": {
     "build": "tsc -b",
     "build:exe": "npm run build && node sea/build.mjs",
+    "build:exe:linux": "npm run build && node sea/build.mjs --target=linux-x64",
     "test": "vitest run"
   },
   "devDependencies": {

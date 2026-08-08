@@ -25,8 +25,9 @@ both of you in the same room automatically.
 
 **Whole server**: a server admin enables the mod's server half (writes every online player to
 the server's `Zomboid/Lua/pzmap-live-server.json`) and runs `pzmap-bridge` — a single
-downloadable program, not an npm package — to publish the whole roster into a room. See
-`bridge/README.md`.
+downloadable program, not an npm package — to publish the whole roster into a room. Windows
+and Linux binaries both exist; there's a specific walkthrough for Pelican/Pterodactyl-style
+panels (which only allow one startup command) too. See `bridge/README.md`.
 
 The friends/server-wide relay is a small Cloudflare Worker (`relay/`) hosted once, centrally —
 not something each player or server owner deploys themselves.
