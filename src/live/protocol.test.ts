@@ -21,6 +21,18 @@ describe('parseLivePayload', () => {
     expect(result?.players[0].facing).toBeUndefined();
   });
 
+  it('keeps a string group field', () => {
+    const payload = { v: 1, players: [{ ...validPlayer, group: 'Outlaws' }] };
+    expect(parseLivePayload(payload)?.players[0].group).toBe('Outlaws');
+  });
+
+  it('drops a non-string group field instead of rejecting the player', () => {
+    const payload = { v: 1, players: [{ ...validPlayer, group: 42 }] };
+    const result = parseLivePayload(payload);
+    expect(result?.players).toHaveLength(1);
+    expect(result?.players[0].group).toBeUndefined();
+  });
+
   it('rejects non-object input', () => {
     expect(parseLivePayload(null)).toBeNull();
     expect(parseLivePayload('nope')).toBeNull();

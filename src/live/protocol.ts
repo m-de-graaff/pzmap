@@ -7,6 +7,9 @@ export interface LivePlayer {
   y: number;
   z: number;
   facing?: number;
+  // The player's B42 faction name, if any — used to scope whole-server
+  // visibility so rival factions don't see each other by default.
+  group?: string;
   updatedAt: number;
 }
 
@@ -21,13 +24,14 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 
 function parsePlayer(raw: unknown): LivePlayer | null {
   if (!isRecord(raw)) return null;
-  const { id, name, x, y, z, updatedAt, facing } = raw;
+  const { id, name, x, y, z, updatedAt, facing, group } = raw;
   if (typeof id !== 'string') return null;
   if (typeof name !== 'string') return null;
   if (typeof x !== 'number' || typeof y !== 'number' || typeof z !== 'number') return null;
   if (typeof updatedAt !== 'number') return null;
   const player: LivePlayer = { id, name, x, y, z, updatedAt };
   if (typeof facing === 'number') player.facing = facing;
+  if (typeof group === 'string') player.group = group;
   return player;
 }
 
