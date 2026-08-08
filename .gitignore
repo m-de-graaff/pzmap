@@ -27,3 +27,6 @@ dist-ssr
 
 # Cloudflare Workers local dev
 .wrangler
+
+# TypeScript incremental build info (bridge/relay use tsc -b directly, not vite)
+*.tsbuildinfo
