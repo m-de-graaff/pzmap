@@ -108,6 +108,54 @@
   margin: 0 16px 12px;
 }
 
+/* ---------- live location panel ---------- */
+
+.live-panel {
+  padding: 4px 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.live-panel-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.live-panel-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #4caf50;
+}
+
+.live-error {
+  margin: 0;
+  font-size: 12px;
+  color: #ef5350;
+}
+
+.live-hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.live-hint code {
+  font-size: 11px;
+  background: var(--panel-2);
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
 .switch-row {
   display: flex;
   align-items: center;

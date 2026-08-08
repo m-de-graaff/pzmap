@@ -3,6 +3,8 @@ import { CATEGORIES, TOWNS } from '../data/locations';
 import type { Location } from '../data/locations';
 import { LAYER_LABELS } from '../map/vectorLayer';
 import type { LayerKey } from '../map/vectorLayer';
+import type { LivePlayer } from '../live/protocol';
+import type { LiveSourceStatus } from '../live/fileSource';
 
 interface SidebarProps {
   query: string;
@@ -14,12 +16,19 @@ interface SidebarProps {
   onSelect: (loc: Location) => void;
   onClearSelection: () => void;
   searchRef: React.RefObject<HTMLInputElement | null>;
+  liveStatus: LiveSourceStatus;
+  liveError: string | null;
+  livePlayers: LivePlayer[];
+  followEnabled: boolean;
+  onPickLiveFile: () => void;
+  onToggleFollow: () => void;
 }
 
 export default function Sidebar({
   query, onQueryChange,
   layerVis, onToggleLayer,
   results, selected, onSelect, onClearSelection, searchRef,
+  liveStatus, liveError, livePlayers, followEnabled, onPickLiveFile, onToggleFollow,
 }: SidebarProps) {
   const listRef = useRef<HTMLUListElement>(null);
   const [copied, setCopied] = useState(false);
@@ -83,6 +92,43 @@ export default function Sidebar({
             <span className="switch-knob" />
           </span>
         </button>
+      </div>
+
+      <div className="live-panel">
+        <div className="live-panel-head">
+          <span className="live-panel-title">Live location</span>
+          {liveStatus === 'reading' && livePlayers.length > 0 && (
+            <span className="live-dot" aria-hidden="true" />
+          )}
+        </div>
+        {livePlayers.length === 0 ? (
+          <button type="button" className="btn" onClick={onPickLiveFile}>
+            {liveStatus === 'idle' ? 'Share my location' : 'Choose file again'}
+          </button>
+        ) : (
+          <button
+            type="button"
+            role="switch"
+            aria-checked={followEnabled}
+            className="switch-row"
+            onClick={onToggleFollow}
+          >
+            <span className="switch-label">Follow me</span>
+            <span className="switch-track" aria-hidden="true">
+              <span className="switch-knob" />
+            </span>
+          </button>
+        )}
+        {liveStatus === 'error' && liveError && (
+          <p className="live-error" role="alert">{liveError}</p>
+        )}
+        {livePlayers.length === 0 && liveStatus === 'idle' && (
+          <p className="live-hint">
+            Requires the <strong>pzmap Live</strong> Workshop mod. Pick your
+            <code>Zomboid/Lua/pzmap-live.json</code> file once — it stays selected for this browser
+            tab.
+          </p>
+        )}
       </div>
 
       {selected && (
