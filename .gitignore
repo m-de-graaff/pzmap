@@ -27,3 +27,6 @@ dist-ssr
 
 # Local Docker self-host config (has your machine's absolute tile path)
 .env
+
+# Local planning notes - not published to GitHub
+docs/plans/
