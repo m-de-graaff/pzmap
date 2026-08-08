@@ -10,6 +10,7 @@ import type { MapData, IsoTransform, LayerKey } from '../map/vectorLayer';
 import { createStreetLabelLayer } from '../map/labelLayer';
 import { TOWNS, POIS, CATEGORIES } from '../data/locations';
 import type { Location } from '../data/locations';
+import type { LivePlayer } from '../live/protocol';
 
 const TRANSPARENT_TILE =
   'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
@@ -58,15 +59,18 @@ interface MapViewProps {
   layerVis: ReadonlySet<LayerKey>;
   selected: Location | null;
   onSelect: (loc: Location) => void;
+  livePlayers: LivePlayer[];
+  followLiveId: string | null;
 }
 
-export default function MapView({ layerVis, selected, onSelect }: MapViewProps) {
+export default function MapView({ layerVis, selected, onSelect, livePlayers, followLiveId }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const coordsRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const projRef = useRef<Projection | null>(null);
   const dataRef = useRef<MapData | null>(null);
   const poiLayerRef = useRef<L.LayerGroup | null>(null);
+  const liveLayerRef = useRef<L.LayerGroup | null>(null);
   const highlightRef = useRef<L.Layer | null>(null);
   const vectorLayerRef = useRef<L.GridLayer | null>(null);
   const labelLayerRef = useRef<L.GridLayer | null>(null);
@@ -206,6 +210,7 @@ export default function MapView({ layerVis, selected, onSelect }: MapViewProps) 
       applyZoomClass();
 
       poiLayerRef.current = L.layerGroup().addTo(map);
+      liveLayerRef.current = L.layerGroup().addTo(map);
       setReady((n) => n + 1);
     });
 
@@ -219,6 +224,7 @@ export default function MapView({ layerVis, selected, onSelect }: MapViewProps) 
       highlightRef.current = null;
       vectorLayerRef.current = null;
       labelLayerRef.current = null;
+      liveLayerRef.current = null;
     };
   }, []);
 
@@ -248,6 +254,33 @@ export default function MapView({ layerVis, selected, onSelect }: MapViewProps) 
       layer.addLayer(marker);
     }
   }, [ready]);
+
+  useEffect(() => {
+    const layer = liveLayerRef.current;
+    const proj = projRef.current;
+    if (!layer || !proj) return;
+    layer.clearLayers();
+    for (const p of livePlayers) {
+      const marker = L.circleMarker(proj.project([p.x, p.y]), {
+        radius: 7,
+        color: '#0a0a0a',
+        weight: 2,
+        fillColor: '#4caf50',
+        fillOpacity: 1,
+      });
+      marker.bindTooltip(p.name, { direction: 'top', offset: [0, -7], permanent: true, className: 'live-label' });
+      layer.addLayer(marker);
+    }
+  }, [livePlayers, ready]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const proj = projRef.current;
+    if (!map || !proj || !followLiveId) return;
+    const target = livePlayers.find((p) => p.id === followLiveId);
+    if (!target) return;
+    map.panTo(proj.project([target.x, target.y]), { animate: true, duration: 0.4 });
+  }, [livePlayers, followLiveId]);
 
   // Fly to and highlight the current selection.
   useEffect(() => {
