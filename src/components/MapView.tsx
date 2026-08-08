@@ -71,6 +71,7 @@ export default function MapView({ layerVis, selected, onSelect, livePlayers, fol
   const dataRef = useRef<MapData | null>(null);
   const poiLayerRef = useRef<L.LayerGroup | null>(null);
   const liveLayerRef = useRef<L.LayerGroup | null>(null);
+  const liveMarkersRef = useRef<Map<string, L.CircleMarker>>(new Map());
   const highlightRef = useRef<L.Layer | null>(null);
   const vectorLayerRef = useRef<L.GridLayer | null>(null);
   const labelLayerRef = useRef<L.GridLayer | null>(null);
@@ -87,6 +88,7 @@ export default function MapView({ layerVis, selected, onSelect, livePlayers, fol
     let disposed = false;
     let map: L.Map | null = null;
     let hashTimer: number | undefined;
+    const liveMarkers = liveMarkersRef.current;
 
     Promise.all([
       loadTileSource(),
@@ -225,6 +227,7 @@ export default function MapView({ layerVis, selected, onSelect, livePlayers, fol
       vectorLayerRef.current = null;
       labelLayerRef.current = null;
       liveLayerRef.current = null;
+      liveMarkers.clear();
     };
   }, []);
 
@@ -255,21 +258,40 @@ export default function MapView({ layerVis, selected, onSelect, livePlayers, fol
     }
   }, [ready]);
 
+  // Updates markers in place (setLatLng) instead of clearing and rebuilding
+  // the layer, since livePlayers changes on every poll tick (~1/s) even when
+  // no one has moved — recreating markers each time flickers their tooltips.
   useEffect(() => {
     const layer = liveLayerRef.current;
     const proj = projRef.current;
     if (!layer || !proj) return;
-    layer.clearLayers();
+    const markers = liveMarkersRef.current;
+    const seen = new Set<string>();
     for (const p of livePlayers) {
-      const marker = L.circleMarker(proj.project([p.x, p.y]), {
-        radius: 7,
-        color: '#0a0a0a',
-        weight: 2,
-        fillColor: '#4caf50',
-        fillOpacity: 1,
-      });
-      marker.bindTooltip(p.name, { direction: 'top', offset: [0, -7], permanent: true, className: 'live-label' });
-      layer.addLayer(marker);
+      seen.add(p.id);
+      const latlng = proj.project([p.x, p.y]);
+      const existing = markers.get(p.id);
+      if (existing) {
+        existing.setLatLng(latlng);
+        if (existing.getTooltip()?.getContent() !== p.name) existing.setTooltipContent(p.name);
+      } else {
+        const marker = L.circleMarker(latlng, {
+          radius: 7,
+          color: '#0a0a0a',
+          weight: 2,
+          fillColor: '#4caf50',
+          fillOpacity: 1,
+        });
+        marker.bindTooltip(p.name, { direction: 'top', offset: [0, -7], permanent: true, className: 'live-label' });
+        marker.addTo(layer);
+        markers.set(p.id, marker);
+      }
+    }
+    for (const [id, marker] of markers) {
+      if (!seen.has(id)) {
+        marker.remove();
+        markers.delete(id);
+      }
     }
   }, [livePlayers, ready]);
 

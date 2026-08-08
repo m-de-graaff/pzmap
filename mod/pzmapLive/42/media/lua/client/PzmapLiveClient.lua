@@ -9,8 +9,12 @@ local PROTOCOL_VERSION = 1
 
 local lastWriteMs = 0
 
+local JSON_ESCAPES = { ['\\'] = '\\\\', ['"'] = '\\"', ['\n'] = '\\n', ['\r'] = '\\r', ['\t'] = '\\t' }
+
 local function escapeJSON(str)
-    return (str:gsub('[\\"]', '\\%0'):gsub('\n', '\\n'))
+    return (str:gsub('[%c\\"]', function(c)
+        return JSON_ESCAPES[c] or string.format('\\u%04x', c:byte())
+    end))
 end
 
 local function writePayload(player)

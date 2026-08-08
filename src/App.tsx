@@ -26,17 +26,23 @@ export default function App() {
   const liveStopRef = useRef<(() => void) | null>(null);
 
   const handlePickLiveFile = async () => {
-    const handle = await pickLiveFile();
-    if (!handle) return;
-    liveStopRef.current?.();
-    setLiveError(null);
-    liveStopRef.current = startPolling(handle, 1000, {
-      onPayload: (payload) => setLivePlayers(payload.players),
-      onStatus: (status, message) => {
-        setLiveStatus(status);
-        setLiveError(message ?? null);
-      },
-    });
+    try {
+      const handle = await pickLiveFile();
+      if (!handle) return;
+      liveStopRef.current?.();
+      setLiveError(null);
+      liveStopRef.current = startPolling(handle, 1000, {
+        onPayload: (payload) => setLivePlayers(payload.players),
+        onStatus: (status, message) => {
+          setLiveStatus(status);
+          setLiveError(message ?? null);
+          if (status === 'error') setLivePlayers([]);
+        },
+      });
+    } catch {
+      setLiveStatus('error');
+      setLiveError('This browser cannot share a live location file (try Chrome or Edge).');
+    }
   };
 
   useEffect(() => () => liveStopRef.current?.(), []);
