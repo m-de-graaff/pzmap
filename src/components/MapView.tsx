@@ -11,6 +11,7 @@ import { createStreetLabelLayer } from '../map/labelLayer';
 import { TOWNS, POIS, CATEGORIES } from '../data/locations';
 import type { Location } from '../data/locations';
 import type { LivePlayer } from '../live/protocol';
+import { getRoomCodeFromHash } from '../live/roomHash';
 
 const TRANSPARENT_TILE =
   'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
@@ -196,7 +197,8 @@ export default function MapView({ layerVis, selected, onSelect, livePlayers, fol
         hashTimer = window.setTimeout(() => {
           if (!map || !projRef.current) return;
           const { x, y } = projRef.current.unproject(map.getCenter());
-          history.replaceState(null, '', `#x=${x}&y=${y}&z=${map.getZoom()}`);
+          const room = getRoomCodeFromHash();
+          history.replaceState(null, '', `#x=${x}&y=${y}&z=${map.getZoom()}${room ? `&room=${room}` : ''}`);
         }, 150);
       });
 

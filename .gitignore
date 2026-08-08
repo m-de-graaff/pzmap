@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 
 .vercel
+
+# Cloudflare Workers local dev
+.wrangler
