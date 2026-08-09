@@ -78,7 +78,7 @@ export default function Sidebar({
               if (e.key === 'ArrowDown') { e.preventDefault(); moveFocus(+1); }
               if (e.key === 'Escape') onQueryChange('');
             }}
-            className="h-9 pr-9"
+            className="h-9 pr-9 [&::-webkit-search-cancel-button]:mr-6"
           />
           <kbd className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 rounded border border-border bg-muted px-1.5 text-[11px] font-mono text-muted-foreground">/</kbd>
         </div>
@@ -94,7 +94,7 @@ export default function Sidebar({
         >
           <span>{LAYER_LABELS.streetNames}</span>
           <span className={cn('relative h-[18px] w-8 flex-none rounded-full transition-colors', streetNamesOn ? 'bg-primary' : 'bg-border')} aria-hidden="true">
-            <span className={cn('absolute left-0.5 top-0.5 h-3.5 w-3.5 rounded-full bg-white transition-transform', streetNamesOn && 'translate-x-3.5')} />
+            <span className={cn('absolute left-0.5 top-0.5 h-3.5 w-3.5 rounded-full bg-white transition-transform motion-reduce:transition-none', streetNamesOn && 'translate-x-3.5')} />
           </span>
         </button>
       </SidebarHeader>
@@ -106,7 +106,7 @@ export default function Sidebar({
               <div className="flex items-center gap-2">
                 <span className="h-2.5 w-2.5 flex-none rounded-full" style={{ background: CATEGORIES[selected.cat].color }} aria-hidden="true" />
                 <h2 className="flex-1 text-sm font-semibold tracking-tight">{selected.name}</h2>
-                <button type="button" aria-label="Close details" onClick={onClearSelection} className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-sidebar-foreground">✕</button>
+                <button type="button" aria-label="Close details" onClick={onClearSelection} className="relative rounded-md p-1 text-muted-foreground after:absolute after:-inset-2 hover:bg-muted hover:text-sidebar-foreground">✕</button>
               </div>
               <p className="mt-1 text-[13px] tabular-nums text-muted-foreground">
                 {CATEGORIES[selected.cat].label}
@@ -117,7 +117,7 @@ export default function Sidebar({
               </p>
               {selected.desc && <p className="mt-2 text-[13px] text-sidebar-foreground text-pretty">{selected.desc}</p>}
               <div className="mt-3">
-                <button type="button" aria-live="polite" onClick={() => copyCoords(selected)} className="inline-flex h-8 min-w-[104px] items-center justify-center rounded-md bg-primary px-3 text-[13px] font-medium text-primary-foreground hover:opacity-90 active:scale-[0.98]">
+                <button type="button" aria-live="polite" onClick={() => copyCoords(selected)} className="inline-flex h-8 min-w-[104px] items-center justify-center rounded-md bg-primary px-3 text-[13px] font-medium text-primary-foreground hover:opacity-90 active:scale-[0.98] motion-reduce:active:scale-100">
                   {copied ? 'Copied!' : 'Copy coords'}
                 </button>
               </div>
@@ -141,7 +141,12 @@ export default function Sidebar({
               {list.map((loc) => (
                 <SidebarMenuItem key={loc.id}>
                   <SidebarMenuButton asChild isActive={selected?.id === loc.id} className="result h-auto py-1.5">
-                    <button type="button" aria-label={`${loc.name}${loc.town ? `, ${loc.town}` : ''}`} onClick={() => onSelect(loc)}>
+                    <button
+                      type="button"
+                      aria-label={`${loc.name}${loc.town ? `, ${loc.town}` : ''}`}
+                      aria-current={selected?.id === loc.id ? 'true' : undefined}
+                      onClick={() => onSelect(loc)}
+                    >
                       <span className="h-2 w-2 flex-none rounded-full" style={{ background: CATEGORIES[loc.cat].color }} aria-hidden="true" />
                       <span className="flex-1 truncate text-sm">{loc.name}</span>
                       <span className="flex-none text-xs text-muted-foreground">{loc.town ?? CATEGORIES[loc.cat].label}</span>

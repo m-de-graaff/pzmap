@@ -63,11 +63,9 @@ export default function App() {
         onClearSelection={() => setSelected(null)}
         searchRef={searchRef}
       />
-      <SidebarInset>
-        <main className="map-main" aria-label="Knox Country map">
-          <MapView layerVis={layerVis} selected={selected} onSelect={setSelected} />
-          <SidebarTrigger className="map-sidebar-trigger" />
-        </main>
+      <SidebarInset className="map-main" aria-label="Knox Country map">
+        <MapView layerVis={layerVis} selected={selected} onSelect={setSelected} />
+        <SidebarTrigger className="map-sidebar-trigger" />
       </SidebarInset>
     </SidebarProvider>
   );
