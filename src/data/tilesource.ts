@@ -8,11 +8,13 @@
 // and the stored image is full resolution divided by 2^skip.
 
 export interface TileSource {
-  url: (level: number, col: number, row: number) => string;
+  url: (level: number, col: number, row: number, layer: number) => string;
   width: number;
   height: number;
   tileSize: number;
   maxLevel: number;
+  minLayer: number;
+  maxLayer: number;
   attribution: string;
   iso: { sx: number; sy: number; ox: number; oy: number };
 }
@@ -25,6 +27,8 @@ interface MapInfo {
   y0: number;
   sqr: number;
   pz_version?: string;
+  minlayer?: number;
+  maxlayer?: number;
 }
 
 /**
@@ -51,12 +55,19 @@ export function loadTileSource(): Promise<TileSource | null> {
       const info: MapInfo = await res.json();
       const div = 2 ** (info.skip ?? 0);
       return {
-        // Base layer is rendered as jpg (image_fmt_base_layer0 in pzmap2dzi conf).
-        url: (level, col, row) => `${base}/layer0_files/${level}/${col}_${row}.jpg`,
+        // Layer 0 (ground) is rendered as jpg (image_fmt_base_layer0 in
+        // pzmap2dzi conf); every other floor uses image_fmt (webp), which
+        // supports the transparency floor compositing relies on.
+        url: (level, col, row, layer) => {
+          const ext = layer === 0 ? 'jpg' : 'webp';
+          return `${base}/layer${layer}_files/${level}/${col}_${row}.${ext}`;
+        },
         width: info.w,
         height: info.h,
         tileSize: 1024,
         maxLevel: Math.ceil(Math.log2(Math.max(info.w, info.h))),
+        minLayer: info.minlayer ?? 0,
+        maxLayer: info.maxlayer ?? 1,
         attribution: `Rendered from ${info.pz_version ?? 'PZ'} game files with pzmap2dzi · assets © The Indie Stone`,
         iso: {
           sx: info.sqr / 2 / div,

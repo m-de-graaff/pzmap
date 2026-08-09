@@ -36,8 +36,8 @@ function makeProjection(iso: IsoTransform): Projection {
 
 const DziTileLayer = L.TileLayer.extend({
   getTileUrl(coords: L.Coords) {
-    const src: TileSource = (this as { options: { source: TileSource } }).options.source;
-    return src.url(src.maxLevel + coords.z, coords.x, coords.y);
+    const { source, floor } = (this as { options: { source: TileSource; floor: number } }).options;
+    return source.url(source.maxLevel + coords.z, coords.x, coords.y, floor);
   },
   // DZI crops edge tiles instead of padding them; Leaflet would stretch those
   // to the full tile size and misplace everything near the map edges.
@@ -47,6 +47,56 @@ const DziTileLayer = L.TileLayer.extend({
     tile.style.height = '';
   },
 });
+
+function createFloorTileLayer(src: TileSource, floor: number, bounds: L.LatLngBounds): L.TileLayer {
+  return new (DziTileLayer as unknown as typeof L.TileLayer)('', {
+    tileSize: src.tileSize,
+    minZoom: -10.5,
+    maxZoom: 1,
+    maxNativeZoom: 0,
+    bounds,
+    errorTileUrl: TRANSPARENT_TILE,
+    keepBuffer: 1,
+    updateWhenZooming: false,
+    zIndex: 2 + (floor - src.minLayer),
+    source: src,
+    floor,
+  } as L.TileLayerOptions & { floor: number });
+}
+
+// Floors composite as an ascending stack, not a ground+current swap: on
+// floor N >= 0, every floor from 0 up through N is mounted (matching
+// pzmap2dzi's own viewer, html/pzmap/map.js:setBaseLayer) so gaps in an
+// upper floor's transparent tiles reveal whatever is stacked beneath.
+// Basements (N < 0) stack from minLayer up through N instead, with ground
+// and everything above it unmounted.
+function applyFloorStack(
+  map: L.Map,
+  src: TileSource,
+  bounds: L.LatLngBounds,
+  floor: number,
+  current: Map<number, L.TileLayer>,
+) {
+  const desired = new Set<number>();
+  if (floor >= 0) {
+    for (let i = 0; i <= floor; i++) desired.add(i);
+  } else {
+    for (let i = src.minLayer; i <= floor; i++) desired.add(i);
+  }
+  for (const [f, layer] of current) {
+    if (!desired.has(f)) {
+      map.removeLayer(layer);
+      current.delete(f);
+    }
+  }
+  for (const f of desired) {
+    if (!current.has(f)) {
+      const layer = createFloorTileLayer(src, f, bounds);
+      layer.addTo(map);
+      current.set(f, layer);
+    }
+  }
+}
 
 function parseHash(): { x: number; y: number; z: number } | null {
   const m = window.location.hash.match(/x=(-?\d+).*?y=(-?\d+).*?z=(-?[\d.]+)/);
@@ -58,9 +108,10 @@ interface MapViewProps {
   layerVis: ReadonlySet<LayerKey>;
   selected: Location | null;
   onSelect: (loc: Location) => void;
+  floor: number;
 }
 
-export default function MapView({ layerVis, selected, onSelect }: MapViewProps) {
+export default function MapView({ layerVis, selected, onSelect, floor }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const coordsRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -69,7 +120,11 @@ export default function MapView({ layerVis, selected, onSelect }: MapViewProps) 
   const highlightRef = useRef<L.Layer | null>(null);
   const vectorLayerRef = useRef<L.GridLayer | null>(null);
   const labelLayerRef = useRef<L.GridLayer | null>(null);
+  const floorLayersRef = useRef<Map<number, L.TileLayer>>(new Map());
+  const tileSourceRef = useRef<TileSource | null>(null);
+  const imageBoundsRef = useRef<L.LatLngBounds | null>(null);
   const layerVisRef = useRef(layerVis);
+  const floorRef = useRef(floor);
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
   // Bumped when the map finishes async setup, so marker effects re-run.
@@ -129,23 +184,14 @@ export default function MapView({ layerVis, selected, onSelect }: MapViewProps) 
           .setZIndex(1)
           .addTo(map);
       }
+      tileSourceRef.current = src;
+      imageBoundsRef.current = imageBounds;
       if (src) {
-        new (DziTileLayer as unknown as typeof L.TileLayer)('', {
-          tileSize: src.tileSize,
-          minZoom: -10.5,
-          maxZoom: 1,
-          maxNativeZoom: 0,
-          bounds: imageBounds,
-          errorTileUrl: TRANSPARENT_TILE,
-          keepBuffer: 1,
-          updateWhenZooming: false,
-          zIndex: 2,
-          source: src,
-        } as L.TileLayerOptions).addTo(map);
+        applyFloorStack(map, src, imageBounds, floorRef.current, floorLayersRef.current);
       }
       if (data) {
         labelLayerRef.current = createStreetLabelLayer(data, iso, imageBounds, () => layerVisRef.current)
-          .setZIndex(3)
+          .setZIndex(1000)
           .addTo(map);
       }
 
@@ -216,6 +262,7 @@ export default function MapView({ layerVis, selected, onSelect }: MapViewProps) 
       highlightRef.current = null;
       vectorLayerRef.current = null;
       labelLayerRef.current = null;
+      floorLayersRef.current.clear();
     };
   }, []);
 
@@ -226,6 +273,16 @@ export default function MapView({ layerVis, selected, onSelect }: MapViewProps) 
     vectorLayerRef.current?.redraw();
     labelLayerRef.current?.redraw();
   }, [layerVis]);
+
+  // Floor changes swap which tile layers are mounted (see applyFloorStack).
+  useEffect(() => {
+    floorRef.current = floor;
+    const map = mapRef.current;
+    const src = tileSourceRef.current;
+    const bounds = imageBoundsRef.current;
+    if (!map || !src || !bounds) return;
+    applyFloorStack(map, src, bounds, floor, floorLayersRef.current);
+  }, [floor]);
 
   // Fly to and highlight the current selection.
   useEffect(() => {
