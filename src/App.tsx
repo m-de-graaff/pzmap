@@ -8,6 +8,8 @@ import { searchLocations } from './lib/search';
 import { buildStreetLocations } from './lib/streets';
 import { loadMapData, ALL_LAYERS } from './map/vectorLayer';
 import type { LayerKey } from './map/vectorLayer';
+import { loadTileSource } from './data/tilesource';
+import FloorControl from './components/FloorControl';
 import './App.css';
 
 export default function App() {
@@ -15,6 +17,8 @@ export default function App() {
   const [layerVis, setLayerVis] = useState<ReadonlySet<LayerKey>>(() => new Set(ALL_LAYERS));
   const [selected, setSelected] = useState<Location | null>(null);
   const [streetLocs, setStreetLocs] = useState<Location[]>([]);
+  const [floor, setFloor] = useState(0);
+  const [floorRange, setFloorRange] = useState<{ min: number; max: number } | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -24,6 +28,22 @@ export default function App() {
       .catch((err) => console.error('street data failed to load', err));
     return () => { alive = false; };
   }, []);
+
+  useEffect(() => {
+    let alive = true;
+    loadTileSource().then((src) => {
+      if (alive && src) setFloorRange({ min: src.minLayer, max: src.maxLayer - 1 });
+    });
+    return () => { alive = false; };
+  }, []);
+
+  // Defends against a tile source whose valid range doesn't include 0 —
+  // pzmap2dzi always forces minlayer <= 0 <= maxlayer-1 today, but that's an
+  // external invariant, not one TypeScript can check here.
+  useEffect(() => {
+    if (!floorRange) return;
+    setFloor((f) => Math.min(Math.max(f, floorRange.min), floorRange.max));
+  }, [floorRange]);
 
   const results = useMemo(
     () => searchLocations(query, [...ALL_LOCATIONS, ...streetLocs]),
@@ -64,8 +84,9 @@ export default function App() {
         searchRef={searchRef}
       />
       <SidebarInset className="map-main" aria-label="Knox Country map">
-        <MapView layerVis={layerVis} selected={selected} onSelect={setSelected} />
+        <MapView layerVis={layerVis} selected={selected} onSelect={setSelected} floor={floor} />
         <SidebarTrigger className="map-sidebar-trigger" />
+        <FloorControl floor={floor} onFloorChange={setFloor} range={floorRange} />
       </SidebarInset>
     </SidebarProvider>
   );
