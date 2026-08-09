@@ -1,5 +1,7 @@
 # Knox Country — Project Zomboid B42 Map
 
+**Live at [knoxcountymap.com](https://www.knoxcountymap.com)**
+
 An interactive map of Knox Country for Project Zomboid Build 42, built with Vite + React + TypeScript + Leaflet.
 
 ## Features

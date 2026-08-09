@@ -1,0 +1,10 @@
+{
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "pzmap.vercel.app" }],
+      "destination": "https://www.knoxcountymap.com/:path*",
+      "permanent": true
+    }
+  ]
+}

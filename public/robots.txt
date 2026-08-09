@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://pzmap.vercel.app/sitemap.xml
+Sitemap: https://www.knoxcountymap.com/sitemap.xml

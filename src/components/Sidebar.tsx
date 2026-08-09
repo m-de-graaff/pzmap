@@ -63,8 +63,8 @@ export default function Sidebar({
     <SidebarRoot collapsible="offcanvas">
       <SidebarHeader className="gap-3 px-4 pt-5 pb-3">
         <div>
-          <h1 className="text-base font-semibold tracking-tight text-sidebar-foreground">Knox Country</h1>
-          <p className="mt-0.5 text-[13px] text-muted-foreground">Project Zomboid · Build 42 map</p>
+          <h1 className="text-base font-semibold tracking-tight text-sidebar-foreground">Project Zomboid Map — Knox Country</h1>
+          <p className="mt-0.5 text-[13px] text-muted-foreground">Build 42 (B42) interactive map</p>
         </div>
         <div className="relative">
           <Input
@@ -168,6 +168,23 @@ export default function Sidebar({
           Town positions from <a href="https://pzwiki.net" target="_blank" rel="noreferrer" className="underline decoration-border hover:text-sidebar-foreground">PZwiki</a>;
           POI spots are approximate. Unofficial fan project.
         </p>
+        <details className="mt-2">
+          <summary className="cursor-pointer select-none text-[13px] font-medium text-sidebar-foreground">About &amp; FAQ</summary>
+          <div className="mt-2 space-y-2 text-pretty">
+            <p>
+              This is a free interactive map of Knox Country for Project Zomboid Build 42 (B42), covering all 14
+              towns and roughly 1,100 named streets.
+            </p>
+            <p>
+              <strong className="text-sidebar-foreground">Does it show building floors?</strong> Yes — use the floor
+              slider on the map to step through multi-storey buildings.
+            </p>
+            <p>
+              <strong className="text-sidebar-foreground">Can I get in-game coordinates?</strong> Select any town,
+              street or POI and use "Copy coords," or hover the map to read the cursor's tile position.
+            </p>
+          </div>
+        </details>
       </SidebarFooter>
     </SidebarRoot>
   );
