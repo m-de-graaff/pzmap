@@ -37,6 +37,14 @@ export default function App() {
     return () => { alive = false; };
   }, []);
 
+  // Defends against a tile source whose valid range doesn't include 0 —
+  // pzmap2dzi always forces minlayer <= 0 <= maxlayer-1 today, but that's an
+  // external invariant, not one TypeScript can check here.
+  useEffect(() => {
+    if (!floorRange) return;
+    setFloor((f) => Math.min(Math.max(f, floorRange.min), floorRange.max));
+  }, [floorRange]);
+
   const results = useMemo(
     () => searchLocations(query, [...ALL_LOCATIONS, ...streetLocs]),
     [query, streetLocs],
