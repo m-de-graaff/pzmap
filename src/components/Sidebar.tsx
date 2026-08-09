@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import FloorControl from './FloorControl';
 
 interface SidebarProps {
   query: string;
@@ -27,12 +28,16 @@ interface SidebarProps {
   onSelect: (loc: Location) => void;
   onClearSelection: () => void;
   searchRef: React.RefObject<HTMLInputElement | null>;
+  floor: number;
+  onFloorChange: (floor: number) => void;
+  floorRange: { min: number; max: number } | null;
 }
 
 export default function Sidebar({
   query, onQueryChange,
   layerVis, onToggleLayer,
   results, selected, onSelect, onClearSelection, searchRef,
+  floor, onFloorChange, floorRange,
 }: SidebarProps) {
   const listRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
@@ -97,6 +102,7 @@ export default function Sidebar({
             <span className={cn('absolute left-0.5 top-0.5 h-3.5 w-3.5 rounded-full bg-white transition-transform motion-reduce:transition-none', streetNamesOn && 'translate-x-3.5')} />
           </span>
         </button>
+        <FloorControl floor={floor} onFloorChange={onFloorChange} range={floorRange} />
       </SidebarHeader>
 
       <SidebarContent>
