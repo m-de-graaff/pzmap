@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import MapView from './components/MapView';
 import Sidebar from './components/Sidebar';
+import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { ALL_LOCATIONS } from './data/locations';
 import type { Location } from './data/locations';
 import { searchLocations } from './lib/search';
@@ -50,7 +51,7 @@ export default function App() {
   };
 
   return (
-    <div className="app">
+    <SidebarProvider>
       <Sidebar
         query={query}
         onQueryChange={setQuery}
@@ -62,9 +63,10 @@ export default function App() {
         onClearSelection={() => setSelected(null)}
         searchRef={searchRef}
       />
-      <main className="map-main" aria-label="Knox Country map">
+      <SidebarInset className="map-main" aria-label="Knox Country map">
         <MapView layerVis={layerVis} selected={selected} onSelect={setSelected} />
-      </main>
-    </div>
+        <SidebarTrigger className="map-sidebar-trigger" />
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
