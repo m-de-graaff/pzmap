@@ -13,54 +13,6 @@
   z-index: 900;
 }
 
-.floor-control {
-  position: absolute;
-  bottom: 90px;
-  right: 10px;
-  z-index: 900;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 6px;
-  border: 1px solid var(--border-strong);
-  border-radius: 8px;
-  background: rgb(10 10 10 / 0.85);
-  backdrop-filter: blur(12px);
-  box-shadow: var(--shadow-raised);
-}
-
-.floor-control-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
-  color: var(--text);
-  cursor: pointer;
-}
-
-.floor-control-btn:hover:not(:disabled) {
-  background: var(--panel-3);
-}
-
-.floor-control-btn:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.floor-control-slider {
-  height: 90px;
-}
-
-.floor-control-label {
-  font-size: 11px;
-  color: var(--text-dim);
-  white-space: nowrap;
-  writing-mode: vertical-rl;
-}
-
 .map-shell {
   position: relative;
   height: 100%;

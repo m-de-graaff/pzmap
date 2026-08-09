@@ -9,7 +9,6 @@ import { buildStreetLocations } from './lib/streets';
 import { loadMapData, ALL_LAYERS } from './map/vectorLayer';
 import type { LayerKey } from './map/vectorLayer';
 import { loadTileSource } from './data/tilesource';
-import FloorControl from './components/FloorControl';
 import './App.css';
 
 export default function App() {
@@ -82,11 +81,13 @@ export default function App() {
         onSelect={setSelected}
         onClearSelection={() => setSelected(null)}
         searchRef={searchRef}
+        floor={floor}
+        onFloorChange={setFloor}
+        floorRange={floorRange}
       />
       <SidebarInset className="map-main" aria-label="Knox Country map">
         <MapView layerVis={layerVis} selected={selected} onSelect={setSelected} floor={floor} />
         <SidebarTrigger className="map-sidebar-trigger" />
-        <FloorControl floor={floor} onFloorChange={setFloor} range={floorRange} />
       </SidebarInset>
     </SidebarProvider>
   );
